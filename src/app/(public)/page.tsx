@@ -6,6 +6,31 @@ import { NewsCarousel } from "@/components/news-carousel";
 import { UnitSelector } from "@/components/sections/unit-selector";
 import { SambutanCard } from "@/components/sections/sambutan-card";
 import { getPublishedNews } from "@/lib/data/news";
+import { siteConfig } from "@/lib/site";
+
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: siteConfig.name,
+  alternateName: siteConfig.shortName,
+  url: siteConfig.url,
+  logo: `${siteConfig.url}/images/logo-white-trim.png`,
+  image: `${siteConfig.url}${siteConfig.ogImage}`,
+  description: siteConfig.description,
+  email: siteConfig.email,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: siteConfig.address,
+    addressLocality: "Jakarta",
+    addressCountry: "ID",
+  },
+  sameAs: [
+    siteConfig.social.instagram,
+    siteConfig.social.linkedin,
+    siteConfig.social.youtube,
+    siteConfig.social.tiktok,
+  ],
+};
 
 // Section titles (Figma h1 — Plus Jakarta Sans ExtraBold 80px, tracking -2.4px)
 const sectionTitle = "text-header font-extrabold text-[#262626]";
@@ -19,6 +44,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+      />
       <Hero />
 
       {/* Sambutan / Welcome */}

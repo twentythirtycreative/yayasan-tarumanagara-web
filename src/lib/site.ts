@@ -2,6 +2,11 @@ export const siteConfig = {
   name: "Yayasan Tarumanagara",
   shortName: "Tarumanagara",
   tagline: "Membangun Nilai, Menginspirasi Masa Depan",
+  /** Canonical site origin (no trailing slash). Set NEXT_PUBLIC_SITE_URL in prod. */
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tarumanagara.org").replace(/\/$/, ""),
+  description:
+    "Yayasan Tarumanagara — Membangun Nilai, Menginspirasi Masa Depan. Informasi lembaga, unit usaha, berita, kegiatan, dan karir.",
+  ogImage: "/images/og.jpg",
   foundationLabel: "Tarumanagara Foundation 2026©",
   address:
     "Jl. Letjen S. Parman No.1 3, RT.3/RW.8, Tomang, Kec. Grogol petamburan, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11440",
