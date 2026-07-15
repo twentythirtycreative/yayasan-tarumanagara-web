@@ -1,7 +1,7 @@
 "use server";
 
 import { desc, eq } from "drizzle-orm";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, unstable_cache, updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
@@ -10,15 +10,16 @@ import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
 import type { AdminJob, AdminNews, Application } from "./types";
 
 // Invalidate the Data Cache + affected public routes after a write.
-// `"max"` = stale-while-revalidate (Next 16 signature).
 function revalidateNews() {
-  revalidateTag(CACHE_TAGS.news, "max");
+  // News publication changes must be visible on the very next public request.
+  // updateTag expires the cached query immediately instead of serving stale data.
+  updateTag(CACHE_TAGS.news);
   revalidatePath("/");
   revalidatePath("/berita");
   revalidatePath("/berita/[slug]", "page");
 }
 function revalidateJobs() {
-  revalidateTag(CACHE_TAGS.jobs, "max");
+  updateTag(CACHE_TAGS.jobs);
   revalidatePath("/karir");
 }
 
