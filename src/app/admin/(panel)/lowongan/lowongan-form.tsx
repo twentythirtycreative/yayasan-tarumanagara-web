@@ -43,6 +43,7 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
   const [isOpen, setIsOpen] = useState(initial?.isOpen ?? true);
   const [errors, setErrors] = useState<LowonganErrors>({});
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const revalidate = (patch: Partial<{ title: string; desc: string }>) => {
     if (!attempted) return;
@@ -76,10 +77,12 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
       isOpen,
     };
     try {
+      setSaving(true);
       await saveJob(item);
       toast.success(editing ? "Perubahan disimpan" : "Lowongan ditambahkan");
       router.push("/admin/lowongan");
     } catch {
+      setSaving(false);
       toast.error("Gagal menyimpan lowongan. Coba lagi.");
     }
   };
@@ -184,9 +187,19 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
 
         <button
           type="submit"
-          className="inline-flex h-11 items-center justify-center gap-2 glass-rim rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03]"
+          disabled={saving}
+          className="inline-flex h-11 items-center justify-center gap-2 glass-rim rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] disabled:opacity-70 disabled:hover:scale-100"
         >
-          <Save className="h-4 w-4" /> {editing ? "Simpan Perubahan" : "Simpan Lowongan"}
+          {saving ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Menyimpan…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> {editing ? "Simpan Perubahan" : "Simpan Lowongan"}
+            </>
+          )}
         </button>
       </form>
     </div>

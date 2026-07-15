@@ -68,7 +68,9 @@ export function NewsCarousel({ items }: { items: NewsCardData[] }) {
             if (e.pointerType !== "mouse") return;
             const el = ref.current;
             if (!el) return;
-            el.setPointerCapture(e.pointerId);
+            // Don't capture yet — capturing on pointerdown would retarget the
+            // click and stop card links from navigating. Capture only once an
+            // actual drag begins (see onPointerMove).
             grab.current = {
               down: true,
               startX: e.clientX,
@@ -81,13 +83,27 @@ export function NewsCarousel({ items }: { items: NewsCardData[] }) {
             const el = ref.current;
             if (!el) return;
             const dx = e.clientX - grab.current.startX;
-            if (Math.abs(dx) > 4) grab.current.moved = true;
+            if (!grab.current.moved) {
+              if (Math.abs(dx) <= 4) return; // still a click, not a drag
+              grab.current.moved = true;
+              el.setPointerCapture(e.pointerId);
+            }
             el.scrollLeft = grab.current.startScroll - dx;
           }}
-          onPointerUp={() => {
+          onPointerUp={(e) => {
+            if (grab.current.moved) {
+              try {
+                ref.current?.releasePointerCapture(e.pointerId);
+              } catch {}
+            }
             grab.current.down = false;
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(e) => {
+            if (grab.current.moved) {
+              try {
+                ref.current?.releasePointerCapture(e.pointerId);
+              } catch {}
+            }
             grab.current.down = false;
           }}
           onClickCapture={(e) => {

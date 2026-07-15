@@ -63,7 +63,9 @@ export default async function BeritaPage() {
                   }}
                 >
                   <h2 className="text-title-1 font-extrabold text-[#f5f5f5]">
-                    {featured.title}
+                    <Link href={`/berita/${featured.slug}`} className="hover:underline">
+                      {featured.title}
+                    </Link>
                   </h2>
                   <p className="line-clamp-3 max-w-[589px] text-caption font-medium text-[#f5f5f5]">
                     <span className="font-bold">{featured.dateLabel} </span>

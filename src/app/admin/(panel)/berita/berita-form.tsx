@@ -157,6 +157,7 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
   const [published, setPublished] = useState(initial?.published ?? false);
   const [errors, setErrors] = useState<BeritaErrors>({});
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // After the first submit attempt, keep errors in sync as fields are fixed.
   const revalidate = (patch: Partial<Parameters<typeof validateBerita>[0]>) => {
@@ -201,10 +202,12 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
       published,
     };
     try {
+      setSaving(true);
       await saveNews(item);
       toast.success(published ? "Berita dipublikasikan" : "Disimpan sebagai draft");
       router.push("/admin/berita");
     } catch (err) {
+      setSaving(false);
       toast.error(
         err instanceof Error && err.message
           ? err.message
@@ -390,10 +393,20 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
 
           <button
             type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 glass-rim rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03]"
+            disabled={saving}
+            className="inline-flex h-11 items-center justify-center gap-2 glass-rim rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] disabled:opacity-70 disabled:hover:scale-100"
           >
-            <Save className="h-4 w-4" />{" "}
-            {published ? "Publikasikan Berita" : "Simpan Berita sebagai Draft"}
+            {saving ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Menyimpan…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />{" "}
+                {published ? "Publikasikan Berita" : "Simpan Berita sebagai Draft"}
+              </>
+            )}
           </button>
         </div>
       </form>
