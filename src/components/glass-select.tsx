@@ -14,8 +14,8 @@ export type SelectOption = {
   trigger?: ReactNode;
 };
 
-// Custom dropdown with an Apple-style glass panel (used for the country code
-// and "Posisi yang Dilamar" fields).
+// Custom dropdown with an Apple-style glass panel. Shared across the app (Kirim
+// CV form, admin Lowongan form, …) so every dropdown looks the same.
 export function GlassSelect({
   options,
   value,

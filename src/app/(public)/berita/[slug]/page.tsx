@@ -64,8 +64,8 @@ export default async function BeritaDetailPage({
   const item = await getNewsBySlug(slug);
   if (!item) notFound();
 
-  // Same date the news card shows (dateLabel), without the "Jakarta, " prefix.
-  const dateLabel = item.dateLabel.split(/,\s*/).pop() ?? item.dateLabel;
+  // Full dateline incl. the "Jakarta, " prefix (e.g. "Jakarta, 13 Agustus 2025").
+  const dateLabel = item.dateLabel;
 
   // The dateline is prepended automatically (bold) from dateLabel — the stored
   // content no longer includes "Jakarta, … –" (Figma 298:1300).
@@ -153,7 +153,7 @@ export default async function BeritaDetailPage({
               <hr className="my-8 border-[#e5e5e5]" />
 
             {/* Body (Figma 298:1300) — leading date is bold */}
-            <div className="whitespace-pre-line text-body leading-[1.8] text-[#262626]">
+            <div className="whitespace-pre-line text-body font-medium leading-[1.8] text-[#262626]">
               {leadDate && <span className="font-bold">{leadDate}</span>}
               {bodyRest}
             </div>

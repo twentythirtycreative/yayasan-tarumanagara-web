@@ -6,19 +6,43 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff, MapPin, Clock, Search } from "lucide-react";
 import { useAdmin } from "../../_store";
 import { useConfirm } from "../confirm";
+import { FilterMenu } from "../filter-menu";
 
 export default function AdminLowonganList() {
   const { jobs, deleteJob, toggleJobOpen, loading } = useAdmin();
   const confirm = useConfirm();
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Record<string, string[]>>({
+    status: [],
+    type: [],
+  });
 
-  const filtered = jobs.filter((j) =>
-    `${j.title} ${j.type} ${j.location}`.toLowerCase().includes(q.trim().toLowerCase()),
-  );
+  const toggleFilter = (key: string, value: string) =>
+    setSelected((prev) => {
+      const arr = prev[key] ?? [];
+      return {
+        ...prev,
+        [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+      };
+    });
+  const resetFilter = () => setSelected({ status: [], type: [] });
+
+  const statusFilter = selected.status ?? [];
+  const typeFilter = selected.type ?? [];
+  const filtered = jobs.filter((j) => {
+    const status = j.isOpen ? "open" : "closed";
+    return (
+      `${j.title} ${j.type} ${j.location}`
+        .toLowerCase()
+        .includes(q.trim().toLowerCase()) &&
+      (statusFilter.length === 0 || statusFilter.includes(status)) &&
+      (typeFilter.length === 0 || typeFilter.includes(j.type))
+    );
+  });
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 sm:items-end">
         <div>
           <h1 className="text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">Lowongan Kerja</h1>
           <p className="mt-1 text-sm text-ink/60">
@@ -27,20 +51,49 @@ export default function AdminLowonganList() {
         </div>
         <Link
           href="/admin/lowongan/baru"
-          className="inline-flex h-11 items-center gap-2 glass-rim glass-btn-primary rounded-xl px-5 text-sm font-semibold transition-transform hover:scale-[1.02]"
+          aria-label="Tambah Lowongan"
+          className="glass-rim inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
         >
-          <Plus className="h-4 w-4" /> Tambah Lowongan
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Tambah Lowongan</span>
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="glass-rim glass-card mt-6 flex items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
-        <Search className="h-4 w-4 text-ink/40" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Cari lowongan…"
-          className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+      {/* Search + filter */}
+      <div className="mt-6 flex items-center gap-3">
+        <div className="glass-rim glass-card flex w-full items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
+          <Search className="h-4 w-4 text-ink/40" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Cari lowongan…"
+            className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+          />
+        </div>
+        <FilterMenu
+          groups={[
+            {
+              key: "status",
+              label: "Status",
+              options: [
+                { value: "open", label: "Dibuka" },
+                { value: "closed", label: "Ditutup" },
+              ],
+            },
+            {
+              key: "type",
+              label: "Tipe Kerja",
+              options: [
+                { value: "Full-Time", label: "Full-Time" },
+                { value: "Part-Time", label: "Part-Time" },
+                { value: "Kontrak", label: "Kontrak" },
+                { value: "Magang", label: "Magang" },
+              ],
+            },
+          ]}
+          selected={selected}
+          onToggle={toggleFilter}
+          onReset={resetFilter}
         />
       </div>
 
@@ -48,7 +101,7 @@ export default function AdminLowonganList() {
         {filtered.map((j) => (
           <div
             key={j.id}
-            className="glass-rim glass-card flex flex-col rounded-[22px] p-5"
+            className="glass-rim glass-card flex flex-col rounded-[18px] p-5"
           >
             <div className="flex items-start justify-between gap-3">
               <h3 className="font-bold text-[#00224f]">{j.title}</h3>
@@ -127,12 +180,12 @@ export default function AdminLowonganList() {
           </div>
         ))}
         {loading && (
-          <div className="glass-rim glass-card col-span-full rounded-[22px] px-5 py-10 text-center text-ink/50">
+          <div className="glass-rim glass-card col-span-full rounded-[18px] px-5 py-10 text-center text-ink/50">
             Memuat…
           </div>
         )}
         {!loading && filtered.length === 0 && (
-          <div className="glass-rim glass-card col-span-full rounded-[22px] px-5 py-10 text-center text-ink/50">
+          <div className="glass-rim glass-card col-span-full rounded-[18px] px-5 py-10 text-center text-ink/50">
             {jobs.length === 0 ? "Belum ada lowongan." : "Lowongan tidak ditemukan."}
           </div>
         )}

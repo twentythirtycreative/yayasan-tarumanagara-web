@@ -10,7 +10,7 @@ export function SambutanCard() {
 
   return (
     <div
-      className={`glass-rim relative z-10 w-full max-w-[660px] rounded-[38px] bg-gradient-to-b from-[rgba(250,250,250,0.85)] from-[29.808%] to-[rgba(255,255,255,0.15)] px-8 pt-6 pb-[64px] shadow-[36px_37px_60.1px_rgba(0,0,0,0.16)] backdrop-blur-[10px] transition-[transform,margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-[38px] sm:pt-[30px] sm:pb-[64px] ${
+      className={`glass-rim relative z-10 w-full max-w-[660px] rounded-[34px] bg-gradient-to-b from-[rgba(250,250,250,0.85)] from-[29.808%] to-[rgba(255,255,255,0.15)] px-8 pt-6 pb-[64px] shadow-[36px_37px_60.1px_rgba(0,0,0,0.16)] backdrop-blur-[10px] transition-[transform,margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-[38px] sm:pt-[30px] sm:pb-[64px] ${
         open
           ? "-mb-[152px] -translate-y-[140px] sm:-mb-[200px] sm:-translate-y-[185px] lg:-mb-[240px] lg:-translate-y-[220px]"
           : "-translate-y-12"
@@ -18,13 +18,11 @@ export function SambutanCard() {
     >
       <p className="text-body font-medium text-[#262626]">
         Sebagai Ketua Yayasan Tarumanagara
-        <br />
-        periode 2022-2027 saya ucapkan,
+        <br className="hidden sm:block" /> periode 2022-2027 saya ucapkan,
       </p>
       <h2 className="mt-5 max-w-[624px] text-title-1 font-bold text-[#262626]">
         Selamat datang kepada Bapak/Ibu
-        <br />
-        di Yayasan Tarumanagara.
+        <br className="hidden sm:block" /> di Yayasan Tarumanagara.
       </h2>
 
       <AnimatePresence initial={false}>

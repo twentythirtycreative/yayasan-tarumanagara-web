@@ -30,7 +30,7 @@ export const jobs = sqliteTable("jobs", {
   id: text("id").primaryKey().$defaultFn(uuid),
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
-  type: text("type").notNull().default("Fulltime"),
+  type: text("type").notNull().default("Full-Time"),
   location: text("location"),
   isOpen: integer("is_open", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -63,6 +63,18 @@ export const adminUsers = sqliteTable("admin_users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+/**
+ * Login throttling (brute-force protection). One row per email; `count` failed
+ * attempts since `windowStart`. Cleared on a successful login. Persistent (vs
+ * in-memory) so it holds across Vercel's serverless instances.
+ */
+export const loginAttempts = sqliteTable("login_attempts", {
+  email: text("email").primaryKey(),
+  count: integer("count").notNull().default(0),
+  windowStart: text("window_start").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });
 
 export type News = typeof news.$inferSelect;

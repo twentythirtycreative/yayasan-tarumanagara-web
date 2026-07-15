@@ -24,7 +24,7 @@ export default function BeritaEditPage({
 
   if (!item) {
     return (
-      <div className="glass-rim glass-card mx-auto max-w-4xl rounded-[22px] p-10 text-center">
+      <div className="glass-rim glass-card mx-auto max-w-4xl rounded-[18px] p-10 text-center">
         <p className="text-ink/60">Berita tidak ditemukan.</p>
         <Link href="/admin/berita" className="glass-rim glass-btn mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium text-[#014aaf]">
           Kembali ke daftar

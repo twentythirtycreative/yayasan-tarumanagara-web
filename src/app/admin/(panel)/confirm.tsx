@@ -102,7 +102,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                   "glass-rim inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-white transition-transform hover:scale-[1.02]",
                   danger
                     ? "bg-[#dc2626] shadow-[0px_8px_20px_rgba(220,38,38,0.28)]"
-                    : "glass-btn-primary",
+                    : "bg-gradient-to-r from-[#00357d] to-[#0060e3] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)]",
                 )}
               >
                 {opts.confirmText ?? "Konfirmasi"}

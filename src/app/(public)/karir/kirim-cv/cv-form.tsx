@@ -4,14 +4,15 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { positions } from "@/lib/validators/application";
+import { applicationSchema, positions } from "@/lib/validators/application";
 import {
   ACCEPTED_CV_TYPES,
   MAX_CV_SIZE,
   formatMB,
 } from "@/lib/validators/upload";
 import { countryCodes } from "@/lib/data/country-codes";
-import { GlassSelect, type SelectOption } from "./glass-select";
+import { FieldError } from "@/components/form-error";
+import { GlassSelect, type SelectOption } from "@/components/glass-select";
 import { submitApplication, type ActionState } from "./actions";
 
 const initialState: ActionState = { ok: false, message: "" };
@@ -20,6 +21,15 @@ const initialState: ActionState = { ok: false, message: "" };
 const labelCls = "text-[14px] font-medium text-[#262626]";
 const inputCls =
   "w-full border-0 border-b-[1.5px] border-[#d9d9d9] bg-transparent pb-1.5 text-[16px] font-medium text-[#262626] caret-[#015ddb] outline-none transition-colors placeholder:text-[#9f9f9f] focus:border-[#015ddb]";
+const inputErrCls =
+  "w-full border-0 border-b-[1.5px] border-[#dc2626] bg-transparent pb-1.5 text-[16px] font-medium text-[#262626] caret-[#dc2626] outline-none transition-colors placeholder:text-[#9f9f9f]";
+
+type CvErrors = Partial<
+  Record<
+    "fullName" | "email" | "phone" | "university" | "major" | "position" | "cv",
+    string
+  >
+>;
 
 function SubmitButton({ sent }: { sent: boolean }) {
   const { pending } = useFormStatus();
@@ -65,8 +75,57 @@ export function CvForm() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [position, setPosition] = useState("");
   const [sent, setSent] = useState(false);
+  const [errors, setErrors] = useState<CvErrors>({});
+  const [attempted, setAttempted] = useState(false);
 
   const dial = countryCodes.find((c) => c.iso === countryIso)?.dial ?? "+62";
+
+  // Validate against the shared zod schema (same rules the server enforces),
+  // reading the uncontrolled text inputs from the DOM. `overrides` lets a change
+  // handler pass the value it just set, since that state update isn't visible yet
+  // within the same tick.
+  const computeErrors = (overrides?: {
+    phoneNumber?: string;
+    position?: string;
+    fileName?: string;
+  }): CvErrors => {
+    const pn = overrides?.phoneNumber ?? phoneNumber;
+    const pos = overrides?.position ?? position;
+    const fn = overrides?.fileName ?? fileName;
+
+    const form = formRef.current;
+    const fd = form ? new FormData(form) : null;
+    const get = (k: string) => String(fd?.get(k) ?? "").trim();
+
+    const errs: CvErrors = {};
+    const parsed = applicationSchema.safeParse({
+      fullName: get("fullName"),
+      email: get("email"),
+      phone: pn.trim() ? `${dial} ${pn}`.trim() : "",
+      university: get("university"),
+      major: get("major"),
+      position: pos,
+    });
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof CvErrors;
+        if (key && !errs[key]) errs[key] = issue.message;
+      }
+    }
+    // Friendlier message for a completely empty phone number.
+    if (!pn.trim()) errs.phone = "Nomor telepon wajib diisi";
+    if (!fn) errs.cv = "CV wajib diunggah";
+    return errs;
+  };
+
+  // Once submit has been attempted, keep errors live as fields are corrected.
+  const revalidate = (overrides?: {
+    phoneNumber?: string;
+    position?: string;
+    fileName?: string;
+  }) => {
+    if (attempted) setErrors(computeErrors(overrides));
+  };
 
   const countryOptions = useMemo<SelectOption[]>(
     () =>
@@ -110,32 +169,45 @@ export function CvForm() {
     <form
       ref={formRef}
       action={formAction}
+      noValidate
       onSubmit={(e) => {
-        // The dropdown + file are custom/hidden, so guard them here; the native
-        // text inputs use `required` and are blocked by the browser first.
-        if (!phoneNumber.trim()) {
+        setAttempted(true);
+        const next = computeErrors();
+        setErrors(next);
+        if (Object.keys(next).length > 0) {
           e.preventDefault();
-          toast.error("Nomor telepon wajib diisi");
-        } else if (!position) {
-          e.preventDefault();
-          toast.error("Posisi yang dilamar wajib dipilih");
-        } else if (!fileName) {
-          e.preventDefault();
-          toast.error("CV wajib diunggah");
+          toast.error("Lengkapi dulu bagian yang wajib diisi.");
         }
       }}
       className="flex flex-col gap-7"
     >
       {/* Row 1 — Nama Lengkap + Alamat Email */}
       <div className="grid gap-x-[68px] gap-y-7 sm:grid-cols-2">
-        <Field label="Nama Lengkap" name="fullName" placeholder="Andie" />
-        <Field label="Alamat Email" name="email" type="email" />
+        <Field
+          label="Nama Lengkap"
+          name="fullName"
+          placeholder="Andie"
+          error={errors.fullName}
+          onValueChange={revalidate}
+        />
+        <Field
+          label="Alamat Email"
+          name="email"
+          type="email"
+          error={errors.email}
+          onValueChange={revalidate}
+        />
       </div>
 
       {/* Nomor Telepon — glass country-code dropdown + number */}
       <div className="flex flex-col gap-3">
         <label className={labelCls}>Nomor Telepon</label>
-        <div className="flex items-center gap-3 border-b-[1.5px] border-[#d9d9d9] focus-within:border-[#015ddb]">
+        <div
+          className={cn(
+            "flex items-center gap-3 border-b-[1.5px]",
+            errors.phone ? "border-[#dc2626]" : "border-[#d9d9d9] focus-within:border-[#015ddb]",
+          )}
+        >
           <GlassSelect
             options={countryOptions}
             value={countryIso}
@@ -146,17 +218,31 @@ export function CvForm() {
           />
           <input
             inputMode="tel"
-            required
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            onChange={(e) => {
+              setPhoneNumber(e.target.value);
+              revalidate({ phoneNumber: e.target.value });
+            }}
+            aria-invalid={Boolean(errors.phone)}
             className="w-full border-0 bg-transparent pb-1.5 text-[16px] font-medium text-[#262626] caret-[#015ddb] outline-none"
           />
         </div>
         <input type="hidden" name="phone" value={`${dial} ${phoneNumber}`.trim()} />
+        <FieldError message={errors.phone} />
       </div>
 
-      <Field label="Asal Universitas" name="university" />
-      <Field label="Jurusan" name="major" />
+      <Field
+        label="Asal Universitas"
+        name="university"
+        error={errors.university}
+        onValueChange={revalidate}
+      />
+      <Field
+        label="Jurusan"
+        name="major"
+        error={errors.major}
+        onValueChange={revalidate}
+      />
 
       {/* Posisi yang Dilamar — glass dropdown */}
       <div className="flex flex-col gap-3">
@@ -164,18 +250,30 @@ export function CvForm() {
         <GlassSelect
           options={positionOptions}
           value={position}
-          onChange={setPosition}
+          onChange={(v) => {
+            setPosition(v);
+            revalidate({ position: v });
+          }}
           placeholder=""
-          triggerClassName="min-h-[27px] border-b-[1.5px] border-[#d9d9d9] pb-1.5 text-[16px] font-medium text-[#262626]"
+          triggerClassName={cn(
+            "min-h-[27px] border-b-[1.5px] pb-1.5 text-[16px] font-medium text-[#262626]",
+            errors.position ? "border-[#dc2626]" : "border-[#d9d9d9]",
+          )}
         />
         <input type="hidden" name="position" value={position} />
+        <FieldError message={errors.position} />
       </div>
 
       {/* Unggah CV Anda — glass Choose File button */}
       <div className="flex flex-col gap-3">
         <label className={labelCls}>Unggah CV Anda</label>
         <div className="flex items-center gap-3">
-          <label className="glass-rim inline-flex h-[38px] cursor-pointer items-center rounded-[31px] border border-[#ebebeb] bg-[rgba(250,250,250,0.35)] px-5 text-[14px] font-medium text-[#262626] shadow-[0px_4px_13.8px_rgba(0,0,0,0.06)] backdrop-blur-md transition-colors hover:bg-white/60">
+          <label
+            className={cn(
+              "glass-rim inline-flex h-[38px] cursor-pointer items-center rounded-[31px] border bg-[rgba(250,250,250,0.35)] px-5 text-[14px] font-medium text-[#262626] shadow-[0px_4px_13.8px_rgba(0,0,0,0.06)] backdrop-blur-md transition-colors hover:bg-white/60",
+              errors.cv ? "border-[#dc2626]" : "border-[#ebebeb]",
+            )}
+          >
             Choose File
             <input
               type="file"
@@ -201,6 +299,7 @@ export function CvForm() {
                   return;
                 }
                 setFileName(file.name);
+                revalidate({ fileName: file.name });
               }}
             />
           </label>
@@ -211,6 +310,7 @@ export function CvForm() {
         <p className="text-[13px] text-[#9f9f9f]">
           Format PDF atau Word, maksimal {formatMB(MAX_CV_SIZE)}.
         </p>
+        <FieldError message={errors.cv} />
       </div>
 
       <div className="pt-1">
@@ -225,18 +325,31 @@ function Field({
   name,
   type = "text",
   placeholder,
+  error,
+  onValueChange,
 }: {
   label: string;
   name: string;
   type?: string;
   placeholder?: string;
+  error?: string;
+  onValueChange?: () => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
       <label htmlFor={name} className={labelCls}>
         {label}
       </label>
-      <input id={name} name={name} type={type} placeholder={placeholder} required className={inputCls} />
+      <input
+        id={name}
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        onChange={onValueChange}
+        aria-invalid={Boolean(error)}
+        className={error ? inputErrCls : inputCls}
+      />
+      <FieldError message={error} />
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default async function BeritaPage() {
         <div className="absolute inset-0 bg-black/35" />
 
         <div className="relative z-10 site-container-wide pt-[130px]">
-          <div className="glass-rim rounded-t-[77px] bg-[rgba(46,46,46,0.55)] px-6 pt-12 pb-36 shadow-[0px_4px_45px_rgba(0,0,0,0.4)] backdrop-blur-[7px] sm:px-14">
+          <div className="glass-rim rounded-t-[40px] bg-[rgba(46,46,46,0.55)] px-6 pt-12 pb-20 shadow-[0px_4px_45px_rgba(0,0,0,0.4)] backdrop-blur-[7px] sm:rounded-t-[77px] sm:px-14 sm:pb-36">
             <h1 className="text-header font-extrabold text-[#f5f5f5]">
               Berita Terbaru
             </h1>
@@ -45,18 +45,18 @@ export default async function BeritaPage() {
             </p>
 
             {featured && (
-              <div className="mt-10 grid overflow-hidden rounded-[40px] md:grid-cols-[minmax(0,488px)_1fr]">
-                <div className="relative aspect-[488/351] w-full md:aspect-auto">
+              <div className="mt-10 grid overflow-hidden rounded-[22px] md:grid-cols-[minmax(0,432px)_1fr] md:rounded-[36px]">
+                <div className="relative aspect-[432/351] w-full md:aspect-auto">
                   <Image
                     src={featured.coverImageUrl ?? "/images/news-mou.jpg"}
                     alt={featured.title}
                     fill
-                    sizes="488px"
+                    sizes="432px"
                     className="object-cover"
                   />
                 </div>
                 <div
-                  className="glass-rim flex flex-col justify-center gap-4 p-8 backdrop-blur-md sm:p-12"
+                  className="glass-rim flex flex-col justify-center gap-6 px-8 py-6 backdrop-blur-md sm:px-12 sm:py-9"
                   style={{
                     backgroundImage:
                       "linear-gradient(110.83deg, rgba(39,79,133,0.6) 9.25%, rgba(9,18,31,0.6) 52.8%)",
@@ -65,19 +65,21 @@ export default async function BeritaPage() {
                   <h2 className="text-title-1 font-extrabold text-[#f5f5f5]">
                     {featured.title}
                   </h2>
-                  <p className="mt-4 line-clamp-3 max-w-[589px] text-body font-medium text-[#f5f5f5]">
+                  <p className="line-clamp-3 max-w-[589px] text-caption font-medium text-[#f5f5f5]">
                     <span className="font-bold">{featured.dateLabel} </span>
                     – {snippet(featured.content, 240)}
                   </p>
-                  <p className="text-body font-bold text-[#f5f5f5]">
-                    {featured.tags.join("   |   ")}
-                  </p>
-                  <Link
-                    href={`/berita/${featured.slug}`}
-                    className="glass-rim mt-2 inline-flex h-[50px] w-[224px] items-center justify-center rounded-[31px] bg-[rgba(250,250,250,0.16)] text-caption font-medium text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-colors hover:bg-white/25"
-                  >
-                    Baca Selengkapnya
-                  </Link>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-meta font-bold text-[#f5f5f5]">
+                      {featured.tags.join("   |   ")}
+                    </p>
+                    <Link
+                      href={`/berita/${featured.slug}`}
+                      className="glass-rim inline-flex h-[42px] w-[190px] shrink-0 items-center justify-center rounded-[31px] bg-[rgba(250,250,250,0.16)] text-caption font-medium text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-colors hover:bg-white/25"
+                    >
+                      Baca Selengkapnya
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}

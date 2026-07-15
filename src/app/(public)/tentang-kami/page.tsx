@@ -26,17 +26,20 @@ export default function TentangKamiPage() {
         image="/images/about-hero.jpg"
         line1="Dari Warisan Nilai"
         line2="Menciptakan Dampak"
+        // Match the Figma crop + tone (node 364:4357): bottom-anchored, and a
+        // darker, higher-contrast B&W than the bright source photo.
+        imageClassName="object-cover object-[center_55%] grayscale brightness-[0.68] contrast-[1.3]"
       />
 
       {/* Kilas Sejarah */}
       <section className="bg-surface py-20 sm:py-28">
         <div className="site-container">
           <Reveal>
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-[72px]">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-[40px]">
               <h2 className={`${heading} text-[#dadada] md:w-[470px] md:shrink-0`}>
                 Kilas <span className="text-[#262626]">Sejarah</span> Tarumanagara
               </h2>
-              <p className="pt-2 text-body font-medium text-[#262626] md:max-w-[470px]">
+              <p className="pt-2 text-body font-medium text-[#262626] md:max-w-[560px]">
                 Yayasan Tarumanagara didirikan pada 18 Juni 1959 dengan semangat
                 memajukan pendidikan dan kesehatan di Indonesia. Terinspirasi dari
                 kejayaan Kerajaan Tarumanagara, yayasan ini memulai perjalanannya
@@ -51,7 +54,7 @@ export default function TentangKamiPage() {
             {sejarahPhotos.map((src, i) => (
               <Reveal key={src} delay={i * 0.1}>
                 <div
-                  className={`relative aspect-[379/396] w-full overflow-hidden rounded-[38px] ${
+                  className={`relative aspect-[379/396] w-full overflow-hidden rounded-[34px] ${
                     i === 1
                       ? "shadow-[46px_36px_59px_rgba(0,0,0,0.25)] sm:-translate-y-10"
                       : ""
@@ -112,7 +115,7 @@ export default function TentangKamiPage() {
             <Reveal className="h-full">
               {/* Stretches to the full height of the text column (Misi → end of
                   the list) on desktop; keeps its aspect ratio when stacked. */}
-              <div className="relative aspect-[422/490] w-full overflow-hidden rounded-[24px] md:aspect-auto md:h-full">
+              <div className="relative aspect-[422/490] w-full overflow-hidden rounded-[20px] md:aspect-auto md:h-full">
                 <Image
                   src="/images/misi.jpg"
                   alt=""
@@ -158,7 +161,7 @@ export default function TentangKamiPage() {
       <section className="overflow-x-clip bg-surface pb-24">
         <div className="mx-auto w-full max-w-[1440px] px-6 sm:px-[46px]">
           <div className="relative pb-10 pt-10 sm:pb-14 sm:pt-14">
-            <div className="pointer-events-none absolute inset-0 rounded-[31px] bg-white shadow-[0px_4px_45px_rgba(0,0,0,0.06)]" />
+            <div className="pointer-events-none absolute inset-0 rounded-[27px] bg-white shadow-[0px_4px_45px_rgba(0,0,0,0.06)]" />
             <GovernanceTabs />
           </div>
         </div>

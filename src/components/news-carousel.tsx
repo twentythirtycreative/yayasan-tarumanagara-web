@@ -97,12 +97,12 @@ export function NewsCarousel({ items }: { items: NewsCardData[] }) {
               e.stopPropagation();
             }
           }}
-          className="flex cursor-grab gap-[40px] overflow-x-hidden py-14 select-none [margin-inline:calc(50%-50vw)] [padding-inline:calc(50vw-50%)] active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex cursor-grab gap-[40px] overflow-x-auto py-14 select-none [margin-inline:calc(50%-50vw)] [overscroll-behavior-x:contain] [padding-inline:calc(50vw-50%)] active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {items.map((item) => (
             <div
               key={item.slug}
-              className="relative w-[300px] shrink-0 origin-center transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:z-10 hover:scale-[1.12] sm:w-[352px]"
+              className="relative w-[300px] shrink-0 origin-center transition-transform duration-[650ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:z-10 hover:scale-[1.12] sm:w-[412px]"
             >
               <NewsCard item={item} />
             </div>

@@ -48,7 +48,7 @@
   --text-hero--line-height: 1.23;
   --text-hero--letter-spacing: -0.03em;
 
-  --text-header: clamp(2.5rem, 6vw, 80px);
+  --text-header: clamp(1.85rem, 4.6vw, 60px);
   --text-header--line-height: 1;
   --text-header--letter-spacing: -0.03em;
 
@@ -67,6 +67,11 @@
 
   --text-caption: 0.875rem; /* 14px */
   --text-caption--line-height: 1.45;
+
+  /* meta — 12px sub-caption for dense card meta (news excerpt + tag row).
+     Outside the 7-role scale like text-hero; kept as a token, not a raw value. */
+  --text-meta: 0.6875rem; /* 11px */
+  --text-meta--line-height: 1.45;
 
   /* Yayasan Tarumanagara brand palette (from Figma variables) */
   --color-navy: #00224f;
@@ -316,8 +321,9 @@
     );
   }
 
-  /* White light rim on the edge of glass surfaces (navbar, glass cards).
-     A 1px gradient border, brighter top-left → fading → subtle bottom-right. */
+  /* Light rim on the edge of glass surfaces (navbar, glass cards). Plain 1px
+     white border, drawn on a ::before overlay so it follows the rounded corners,
+     never shifts layout, and doesn't clash with an element's own border. */
   .glass-rim {
     position: relative;
   }
@@ -326,23 +332,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.75px;
-    /* Diagonal white glass rim: bright top-left → fading → bright bottom-right */
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.7) 0%,
-      rgba(255, 255, 255, 0.22) 42%,
-      rgba(255, 255, 255, 0.18) 60%,
-      rgba(255, 255, 255, 0.6) 100%
-    );
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask-composite: exclude;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     pointer-events: none;
   }
 

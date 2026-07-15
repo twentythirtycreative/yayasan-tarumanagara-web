@@ -110,7 +110,7 @@ export default async function HomePage() {
           {/* The white panel is only a BACKGROUND (Figma 342:1158). Cards float
               above it and are free to travel out past its edges. */}
           <div className="relative pb-10 pt-10 sm:pb-14 sm:pt-14">
-            <div className="pointer-events-none absolute inset-0 rounded-[31px] bg-white shadow-[0px_4px_45px_rgba(0,0,0,0.06)]" />
+            <div className="pointer-events-none absolute inset-0 rounded-[27px] bg-white shadow-[0px_4px_45px_rgba(0,0,0,0.06)]" />
             {/* Heading row — aligned to the global content margin (--content-max),
                 same left edge as every other section (Figma: title at x≈122px). */}
             <Reveal className="site-container relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">

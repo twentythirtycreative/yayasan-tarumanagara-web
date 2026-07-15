@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Newspaper,
@@ -29,6 +29,49 @@ const nav = [
 export default function PanelLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // Swipe-to-close for the mobile drawer: follow the finger left, then snap.
+  const drag = useRef<{ startX: number; startY: number; active: boolean; dx: number } | null>(null);
+  const [dragX, setDragX] = useState<number | null>(null);
+
+  const onDrawerPointerDown = (e: React.PointerEvent) => {
+    if (!open) return;
+    drag.current = { startX: e.clientX, startY: e.clientY, active: false, dx: 0 };
+  };
+  const onDrawerPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.active) {
+      // Lock the gesture to horizontal; let vertical moves scroll the menu.
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        d.active = true;
+        // Capture so a mouse/finger drag keeps tracking outside the drawer.
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {}
+      } else {
+        drag.current = null;
+        return;
+      }
+    }
+    const clamped = Math.min(0, dx); // only leftward (closing)
+    d.dx = clamped;
+    setDragX(clamped);
+  };
+  const onDrawerPointerEnd = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (d?.active) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+    if (d && d.dx <= -70) setOpen(false); // past threshold → close
+    setDragX(null);
+  };
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -102,7 +145,7 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
             ~top half and fading to transparent — pure accent, glows stay visible */}
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[55vh] [mask-image:linear-gradient(to_bottom,black_0%,black_35%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_35%,transparent_100%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[55svh] lg:fixed [mask-image:linear-gradient(to_bottom,black_0%,black_35%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_35%,transparent_100%)]"
         >
           <Image
             src="/images/about-hero.jpg"
@@ -141,33 +184,50 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
           {SidebarContent}
         </aside>
 
-        {/* Mobile top bar */}
-        <div className="glass-rim glass-card sticky top-0 z-30 flex items-center justify-between px-4 py-3 lg:hidden">
-          <span className="font-extrabold text-[#00224f]">Admin Tarumanagara</span>
+        {/* Mobile drawer — always mounted so it can slide in/out smoothly.
+            Animated props are inline styles so they always apply. */}
+        <div
+          onClick={() => setOpen(false)}
+          aria-hidden={!open}
+          style={{ opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
+          className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 lg:hidden"
+        />
+        <aside
+          aria-hidden={!open}
+          onPointerDown={onDrawerPointerDown}
+          onPointerMove={onDrawerPointerMove}
+          onPointerUp={onDrawerPointerEnd}
+          onPointerCancel={onDrawerPointerEnd}
+          style={{
+            transform:
+              dragX !== null
+                ? `translateX(${dragX}px)`
+                : open
+                  ? "translateX(0)"
+                  : "translateX(-100%)",
+            transition: dragX !== null ? "none" : undefined,
+            // Only blur while open — a backdrop-filter on the always-mounted,
+            // off-screen drawer would otherwise recompute every scroll frame.
+            backdropFilter: open || dragX !== null ? "blur(12px)" : "none",
+            WebkitBackdropFilter: open || dragX !== null ? "blur(12px)" : "none",
+          }}
+          className="glass-rim fixed inset-y-0 left-0 z-50 w-[250px] touch-pan-y bg-[linear-gradient(160deg,rgba(1,74,175,0.95)_0%,rgba(0,77,182,0.86)_100%)] shadow-[0px_18px_50px_rgba(1,74,175,0.35)] transition-transform duration-300 ease-out lg:hidden"
+        >
+          {SidebarContent}
+        </aside>
+
+        <main className="relative z-10 px-5 py-6 sm:px-8 sm:py-8 lg:ml-[320px] lg:py-10 lg:pr-10">
+          {/* Mobile menu button — sits above the page title (no floating bar). */}
           <button
             type="button"
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
-            className="glass-rim glass-btn grid h-9 w-9 place-items-center rounded-lg text-[#00224f]"
+            className="glass-rim glass-btn mb-4 grid h-11 w-11 place-items-center rounded-xl text-[#00224f] lg:hidden"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-        </div>
-
-        {/* Mobile drawer */}
-        {open && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-              onClick={() => setOpen(false)}
-            />
-            <aside className="glass-rim fixed left-3 top-3 bottom-3 z-50 w-[250px] rounded-[24px] bg-[linear-gradient(160deg,rgba(1,74,175,0.95)_0%,rgba(0,77,182,0.86)_100%)] shadow-[0px_18px_50px_rgba(1,74,175,0.35)] backdrop-blur-[12px] lg:hidden">
-              {SidebarContent}
-            </aside>
-          </>
-        )}
-
-        <main className="relative z-10 px-5 py-6 sm:px-8 sm:py-8 lg:ml-[320px] lg:py-10 lg:pr-10">{children}</main>
+          {children}
+        </main>
       </div>
       </ConfirmProvider>
     </AdminStoreProvider>

@@ -84,9 +84,9 @@ export function UnitSelector() {
               <Link
                 key={card.image}
                 href={`/unit/${activeUnit.slug}`}
-                className="group relative flex w-full flex-col overflow-hidden rounded-[18px] bg-white p-3 sm:w-[249px] lg:w-auto lg:min-w-0 lg:flex-1 lg:basis-0 lg:max-w-[249px]"
+                className="group relative flex w-full flex-col overflow-hidden rounded-[14px] bg-white p-3 sm:w-[249px] lg:w-auto lg:min-w-0 lg:flex-1 lg:basis-0 lg:max-w-[249px]"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-[23px]">
+                <div className="relative aspect-square w-full overflow-hidden rounded-[19px]">
                   <Image
                     src={card.image}
                     alt={card.title}

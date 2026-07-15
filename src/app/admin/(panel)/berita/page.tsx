@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff } from "lucide-react";
+import { FilterMenu } from "../filter-menu";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "../../_store";
 import { useConfirm } from "../confirm";
@@ -108,43 +109,186 @@ function RowActions({
   );
 }
 
-export default function AdminBeritaList() {
-  const { news, deleteNews, togglePublish, loading } = useAdmin();
-  const confirm = useConfirm();
-  const [q, setQ] = useState("");
+type NewsItem = ReturnType<typeof useAdmin>["news"][number];
 
-  const filtered = news.filter((n) =>
-    n.title.toLowerCase().includes(q.trim().toLowerCase()),
+function StatusBadge({ published }: { published: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        published ? "bg-[#e6f6ec] text-[#137a37]" : "bg-[#fdf1df] text-[#9a5b00]",
+      )}
+    >
+      <span className={cn("h-1.5 w-1.5 rounded-full", published ? "bg-[#22a745]" : "bg-[#e0a52b]")} />
+      {published ? "Publik" : "Draf"}
+    </span>
   );
+}
+
+// Wraps RowActions with the confirm/mutation wiring so the table and the mobile
+// card list can share one implementation.
+function NewsRowActions({ item }: { item: NewsItem }) {
+  const { deleteNews, togglePublish } = useAdmin();
+  const confirm = useConfirm();
+  return (
+    <RowActions
+      published={item.published}
+      editHref={`/admin/berita/${item.id}`}
+      onTogglePublish={async () => {
+        const ok = await confirm(
+          item.published
+            ? {
+                title: "Matikan publikasi?",
+                description: `"${item.title}" akan disembunyikan dari halaman publik dan menjadi draf.`,
+                confirmText: "Jadikan Draf",
+                variant: "danger",
+              }
+            : {
+                title: "Publikasikan berita?",
+                description: `"${item.title}" akan tampil di halaman publik.`,
+                confirmText: "Publikasikan",
+                variant: "primary",
+              },
+        );
+        if (!ok) return;
+        await togglePublish(item.id);
+        toast.success(item.published ? "Dijadikan draf" : "Dipublikasikan");
+      }}
+      onDelete={async () => {
+        const ok = await confirm({
+          title: "Hapus berita?",
+          description: `"${item.title}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
+          confirmText: "Hapus",
+          variant: "danger",
+        });
+        if (!ok) return;
+        await deleteNews(item.id);
+        toast.success("Berita dihapus");
+      }}
+    />
+  );
+}
+
+export default function AdminBeritaList() {
+  const { news, loading } = useAdmin();
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Record<string, string[]>>({ status: [] });
+
+  const toggleFilter = (key: string, value: string) =>
+    setSelected((prev) => {
+      const arr = prev[key] ?? [];
+      return {
+        ...prev,
+        [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
+      };
+    });
+  const resetFilter = () => setSelected({ status: [] });
+
+  const statusFilter = selected.status ?? [];
+  const filtered = news.filter((n) => {
+    const status = n.published ? "published" : "draft";
+    return (
+      n.title.toLowerCase().includes(q.trim().toLowerCase()) &&
+      (statusFilter.length === 0 || statusFilter.includes(status))
+    );
+  });
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 sm:items-end">
         <div>
           <h1 className="text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">Berita &amp; Kegiatan</h1>
           <p className="mt-1 text-sm text-ink/60">Kelola, publikasikan, dan sunting artikel.</p>
         </div>
         <Link
           href="/admin/berita/baru"
-          className="glass-rim glass-btn-primary inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold transition-transform hover:scale-[1.02]"
+          aria-label="Tambah Berita"
+          className="glass-rim inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
         >
-          <Plus className="h-4 w-4" /> Tambah Berita
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Tambah Berita</span>
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="glass-rim glass-card mt-6 flex items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
-        <Search className="h-4 w-4 text-ink/40" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Cari judul…"
-          className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+      {/* Search + filter */}
+      <div className="mt-6 flex items-center gap-3">
+        <div className="glass-rim glass-card flex w-full items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
+          <Search className="h-4 w-4 text-ink/40" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Cari judul…"
+            className="h-11 w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+          />
+        </div>
+        <FilterMenu
+          groups={[
+            {
+              key: "status",
+              label: "Status",
+              options: [
+                { value: "published", label: "Publik" },
+                { value: "draft", label: "Draf" },
+              ],
+            },
+          ]}
+          selected={selected}
+          onToggle={toggleFilter}
+          onReset={resetFilter}
         />
       </div>
 
-      {/* Table */}
-      <div className="glass-rim glass-card mt-4 overflow-hidden rounded-[24px]">
+      {/* Mobile: card list (the table below scrolls awkwardly on phones) */}
+      <div className="mt-4 flex flex-col gap-3 md:hidden">
+        {filtered.map((n) => (
+          <div key={n.id} className="glass-rim glass-card rounded-[16px] p-4">
+            <div className="flex gap-3.5">
+              <div className="relative grid h-14 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/5">
+                {n.coverImageUrl ? (
+                  <Image src={n.coverImageUrl} alt="" fill sizes="80px" className="object-cover" />
+                ) : (
+                  <ImageOff className="h-5 w-5 text-ink/25" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="line-clamp-2 font-semibold text-[#00224f]">{n.title}</span>
+                  <NewsRowActions item={n} />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <StatusBadge published={n.published} />
+                  <span className="text-xs text-ink/55">{n.dateLabel}</span>
+                </div>
+              </div>
+            </div>
+            {n.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {n.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-xs font-medium text-[#014aaf]"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div className="glass-rim glass-card rounded-[16px] px-5 py-10 text-center text-ink/45">
+            Memuat…
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <div className="glass-rim glass-card rounded-[16px] px-5 py-10 text-center text-ink/45">
+            {news.length === 0 ? "Belum ada berita." : "Berita tidak ditemukan."}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="glass-rim glass-card mt-4 hidden overflow-hidden rounded-[20px] md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
@@ -164,8 +308,12 @@ export default function AdminBeritaList() {
                 >
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3.5">
-                      <div className="relative h-11 w-16 shrink-0 overflow-hidden rounded-md bg-black/5 ring-1 ring-black/5">
-                        <Image src={n.coverImageUrl} alt="" fill sizes="64px" className="object-cover" />
+                      <div className="relative grid h-11 w-16 shrink-0 place-items-center overflow-hidden rounded-md bg-black/5 ring-1 ring-black/5">
+                        {n.coverImageUrl ? (
+                          <Image src={n.coverImageUrl} alt="" fill sizes="64px" className="object-cover" />
+                        ) : (
+                          <ImageOff className="h-4 w-4 text-ink/25" />
+                        )}
                       </div>
                       <span className="line-clamp-2 max-w-[260px] font-semibold text-[#00224f]">
                         {n.title}
@@ -186,53 +334,11 @@ export default function AdminBeritaList() {
                   </td>
                   <td className="whitespace-nowrap px-6 py-3.5 text-ink/55">{n.dateLabel}</td>
                   <td className="px-6 py-3.5">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-                        n.published ? "bg-[#e6f6ec] text-[#137a37]" : "bg-[#fdf1df] text-[#9a5b00]",
-                      )}
-                    >
-                      <span className={cn("h-1.5 w-1.5 rounded-full", n.published ? "bg-[#22a745]" : "bg-[#e0a52b]")} />
-                      {n.published ? "Publik" : "Draf"}
-                    </span>
+                    <StatusBadge published={n.published} />
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex justify-start">
-                      <RowActions
-                        published={n.published}
-                        editHref={`/admin/berita/${n.id}`}
-                        onTogglePublish={async () => {
-                          const ok = await confirm(
-                            n.published
-                              ? {
-                                  title: "Matikan publikasi?",
-                                  description: `"${n.title}" akan disembunyikan dari halaman publik dan menjadi draf.`,
-                                  confirmText: "Jadikan Draf",
-                                  variant: "danger",
-                                }
-                              : {
-                                  title: "Publikasikan berita?",
-                                  description: `"${n.title}" akan tampil di halaman publik.`,
-                                  confirmText: "Publikasikan",
-                                  variant: "primary",
-                                },
-                          );
-                          if (!ok) return;
-                          await togglePublish(n.id);
-                          toast.success(n.published ? "Dijadikan draf" : "Dipublikasikan");
-                        }}
-                        onDelete={async () => {
-                          const ok = await confirm({
-                            title: "Hapus berita?",
-                            description: `"${n.title}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
-                            confirmText: "Hapus",
-                            variant: "danger",
-                          });
-                          if (!ok) return;
-                          await deleteNews(n.id);
-                          toast.success("Berita dihapus");
-                        }}
-                      />
+                      <NewsRowActions item={n} />
                     </div>
                   </td>
                 </tr>

@@ -5,12 +5,13 @@ import * as api from "./actions";
 import type { AdminJob, AdminNews, Application } from "./types";
 
 export type { AdminJob, AdminNews, Application } from "./types";
-export { NEWS_TAGS, slugify } from "./types";
+export { NEWS_TAGS, slugify, shortId } from "./types";
 
 type Store = {
   news: AdminNews[];
   jobs: AdminJob[];
   applications: Application[];
+  adminEmail: string;
   loading: boolean;
   saveNews: (n: AdminNews) => Promise<void>;
   deleteNews: (id: string) => Promise<void>;
@@ -29,21 +30,24 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
   const [news, setNews] = useState<AdminNews[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        const [n, j, a] = await Promise.all([
+        const [n, j, a, me] = await Promise.all([
           api.listNews(),
           api.listJobs(),
           api.listApplications(),
+          api.getCurrentAdmin(),
         ]);
         if (!active) return;
         setNews(n);
         setJobs(j);
         setApplications(a);
+        setAdminEmail(me.email);
       } catch (err) {
         console.error("Gagal memuat data admin (cek koneksi Turso):", err);
       } finally {
@@ -59,9 +63,11 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     news,
     jobs,
     applications,
+    adminEmail,
     loading,
     saveNews: async (n) => {
-      await api.saveNews(n);
+      const res = await api.saveNews(n);
+      if (res?.error) throw new Error(res.error);
       // Optimistic local update (avoids depending on cache freshness).
       setNews((prev) =>
         prev.some((x) => x.id === n.id)
@@ -74,9 +80,12 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       setNews((prev) => prev.filter((x) => x.id !== id));
     },
     togglePublish: async (id) => {
-      await api.togglePublish(id);
+      const res = await api.togglePublish(id);
+      // Reconcile with the server's actual state; drop the row if it's gone.
       setNews((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, published: !x.published } : x)),
+        res === null
+          ? prev.filter((x) => x.id !== id)
+          : prev.map((x) => (x.id === id ? { ...x, published: res.published } : x)),
       );
     },
     getNews: (id) => news.find((x) => x.id === id),
@@ -93,9 +102,11 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       setJobs((prev) => prev.filter((x) => x.id !== id));
     },
     toggleJobOpen: async (id) => {
-      await api.toggleJobOpen(id);
+      const res = await api.toggleJobOpen(id);
       setJobs((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, isOpen: !x.isOpen } : x)),
+        res === null
+          ? prev.filter((x) => x.id !== id)
+          : prev.map((x) => (x.id === id ? { ...x, isOpen: res.isOpen } : x)),
       );
     },
     getJob: (id) => jobs.find((x) => x.id === id),

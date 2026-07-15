@@ -26,7 +26,7 @@ export default function AdminError({
         <button
           type="button"
           onClick={reset}
-          className="glass-rim glass-btn-primary mt-6 inline-flex h-11 items-center gap-2 rounded-xl px-5 text-sm font-semibold transition-transform hover:scale-[1.02]"
+          className="glass-rim mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] px-5 text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03]"
         >
           <RotateCw className="h-4 w-4" /> Coba lagi
         </button>
