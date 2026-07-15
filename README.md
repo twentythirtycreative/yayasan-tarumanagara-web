@@ -32,18 +32,21 @@ CMS admin untuk mengelola Berita & Kegiatan, Lowongan Kerja, dan Lamaran (Kirim 
 
 ```bash
 npm install
-cp .env.example .env.local     # isi nilai dari Turso (lihat di bawah)
-npm run db:push                # buat tabel di Turso dari schema Drizzle
+cp .env.example .env.development.local   # isi nilai dari Turso (DB dev)
+npm run db:push                          # buat tabel di Turso dari schema Drizzle
 npm run create-admin -- "admin@domain.com" "kata-sandi-kuat"
-npm run dev                    # http://localhost:3000
+npm run dev                              # http://localhost:3000
 ```
 
-Tanpa `.env.local`, situs publik tetap tampil (data contoh); fitur simpan/upload
+Tanpa file env, situs publik tetap tampil (data contoh); fitur simpan/upload
 dan admin aktif setelah Turso dikonfigurasi.
 
 ## Environment variables
 
-Isi di `.env.local` (jangan di-commit — sudah di-`.gitignore`):
+Pisahkan DB per environment (semua di-`.gitignore`):
+
+- **`.env.development.local`** → DB **dev** (dipakai `next dev` & `db:push` default)
+- **`.env.production.local`** → DB **prod** (lokal), atau set langsung di **Vercel**
 
 ```
 # Turso (libSQL) — turso db show <name> --url  /  turso db tokens create <name>
@@ -53,6 +56,15 @@ TURSO_AUTH_TOKEN=your-auth-token
 # Admin auth (rahasia acak):
 # node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 AUTH_SECRET=your-random-32-byte-base64-secret
+```
+
+Menjalankan perintah DB terhadap **prod** (mis. `db:push`):
+
+```bash
+# Windows PowerShell
+$env:DOTENV_FILE=".env.production.local"; npm run db:push
+# bash
+DOTENV_FILE=.env.production.local npm run db:push
 ```
 
 ## Perintah npm

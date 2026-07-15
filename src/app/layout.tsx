@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { siteConfig } from "@/lib/site";
 
 // Figma uses Plus Jakarta Sans throughout, including display headings
 // (Bold / Bold Italic). We load italic + the full weight range.
@@ -16,12 +17,28 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Yayasan Tarumanagara",
-    template: "%s | Yayasan Tarumanagara",
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "Yayasan Tarumanagara — Membangun Nilai, Menginspirasi Masa Depan. Informasi lembaga, unit usaha, berita, kegiatan, dan karir.",
-  metadataBase: new URL("https://yayasan-tarumanagara.example"),
+  description: siteConfig.description,
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  keywords: [
+    "Yayasan Tarumanagara",
+    "Tarumanagara",
+    "Universitas Tarumanagara",
+    "Untar",
+    "pendidikan",
+    "kesehatan",
+    "berita",
+    "karir",
+    "lowongan",
+    "yayasan Jakarta",
+  ],
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  alternates: { canonical: "/" },
   // Favicon package in /public/favicon (realfavicongenerator). The root
   // /favicon.ico is served via the app/favicon.ico convention.
   manifest: "/favicon/site.webmanifest",
@@ -32,12 +49,26 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
   },
-  appleWebApp: { title: "Tarumanagara" },
+  appleWebApp: { title: siteConfig.shortName },
   openGraph: {
-    title: "Yayasan Tarumanagara",
-    description: "Membangun Nilai, Menginspirasi Masa Depan.",
     type: "website",
     locale: "id_ID",
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+    images: [{ url: siteConfig.ogImage, width: 1200, height: 630, alt: siteConfig.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
 };
 

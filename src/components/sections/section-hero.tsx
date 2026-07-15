@@ -27,7 +27,7 @@ export function SectionHero({
   line2Indent?: string;
 }) {
   return (
-    <section className="relative h-[340px] w-full overflow-hidden sm:h-[404px]">
+    <section className="relative aspect-[1440/486] max-h-[486px] min-h-[340px] w-full overflow-hidden">
       <Image
         src={image}
         alt=""
@@ -42,7 +42,7 @@ export function SectionHero({
         {/* Staggered title group. `--fs` drives font size; the em-based offsets
             (1.696em ≈ 78px, 1.087em ≈ 50px at 46px) scale with it. */}
         <div
-          className="relative w-fit [--fs:clamp(1.9rem,4.8vw,45.954px)]"
+          className="relative w-fit [--fs:clamp(1.55rem,5.4vw,45.954px)]"
           style={{ fontSize: "var(--fs)" }}
         >
           <p className="leading-[1.087] font-medium whitespace-nowrap text-[#fafafa]">

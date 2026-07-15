@@ -19,7 +19,7 @@ export type AdminJob = {
   id: string;
   title: string;
   desc: string;
-  type: string; // e.g. "Fulltime"
+  type: string; // e.g. "Full-Time"
   location: string; // e.g. "Work From Office"
   isOpen: boolean;
 };
@@ -44,3 +44,10 @@ export const slugify = (s: string) =>
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+/**
+ * Short 6-char base36 id appended to a slug on article creation, so duplicate
+ * titles never collide (e.g. "kerja-sama-untar-bri-a1b2c3"). The DB's unique
+ * slug constraint is the final safety net against the (rare) collision.
+ */
+export const shortId = () => Math.random().toString(36).slice(2, 8).padEnd(6, "0");

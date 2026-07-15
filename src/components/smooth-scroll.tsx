@@ -10,6 +10,11 @@ export function SmoothScroll() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Skip Lenis on touch devices: it only smooths the mouse WHEEL (touch is
+    // already native), and its resize handling hitches when the mobile address
+    // bar shows/hides mid-scroll. Native touch scrolling is smoother there.
+    if (window.matchMedia("(hover: none) and (pointer: coarse)").matches) return;
+
     const lenis = new Lenis({
       duration: 1.15,
       easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic — gentle glide

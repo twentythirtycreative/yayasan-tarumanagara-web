@@ -24,7 +24,7 @@ export default function KirimCvPage() {
           <div className="lg:grid lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)] lg:items-start lg:gap-14">
             {/* Left: tall teamwork photo (Figma 222:970) */}
             <Reveal>
-              <div className="relative aspect-[601/724] w-full overflow-hidden rounded-[38px] shadow-[0px_4px_45px_rgba(0,0,0,0.08)]">
+              <div className="relative aspect-[601/724] w-full overflow-hidden rounded-[34px] shadow-[0px_4px_45px_rgba(0,0,0,0.08)]">
                 <Image
                   src="/images/cv-team.jpg"
                   alt="Tim Yayasan Tarumanagara berkolaborasi"
@@ -53,7 +53,7 @@ export default function KirimCvPage() {
               </div>
 
               <div
-                className="glass-rim mt-8 rounded-[38px] p-7 shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)] backdrop-blur-md sm:p-11"
+                className="glass-rim mt-8 rounded-[34px] p-7 shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)] backdrop-blur-md sm:p-11"
                 style={{
                   backgroundImage:
                     "linear-gradient(134.84deg, rgba(237,245,255,0.46) 58.52%, rgba(255,255,255,0) 99.23%)",

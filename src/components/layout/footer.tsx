@@ -28,7 +28,7 @@ export function Footer() {
           <Link
             href="/"
             aria-label="Beranda Yayasan Tarumanagara"
-            className="relative block h-[60px] w-[287px] max-w-full transition-opacity hover:opacity-90"
+            className="relative block h-[48px] w-[230px] max-w-full transition-opacity hover:opacity-90 sm:h-[60px] sm:w-[287px]"
           >
             <Image
               src="/images/logo-white-trim.png"

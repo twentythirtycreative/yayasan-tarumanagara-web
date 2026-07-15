@@ -12,7 +12,7 @@ export function NewsTabs() {
 
   return (
     <div className="w-full bg-gradient-to-r from-[#00357d] to-[#28599c] shadow-[0px_4px_13.8px_rgba(0,0,0,0.07)]">
-      <div className="site-container flex items-center gap-12 sm:gap-16">
+      <div className="site-container flex items-center gap-6 sm:gap-16">
         {TABS.map((tab, i) => {
           const isActive = i === active;
           return (
@@ -21,7 +21,7 @@ export function NewsTabs() {
               type="button"
               onClick={() => setActive(i)}
               className={cn(
-                "relative cursor-pointer py-6 text-[24px] transition-colors",
+                "relative cursor-pointer whitespace-nowrap py-6 text-[16px] transition-colors sm:text-[24px]",
                 isActive
                   ? "font-bold text-[#f5f5f5]"
                   : "font-normal text-[rgba(245,245,245,0.51)] hover:text-[#f5f5f5]",

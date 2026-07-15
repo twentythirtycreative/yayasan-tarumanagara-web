@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import { Calendar, ChevronLeft, User } from "lucide-react";
 import { NewsTabs } from "../news-tabs";
 import { ShareButton } from "./share-button";
+import { snippet } from "@/components/news-card";
 import { getNewsBySlug, getPublishedNews } from "@/lib/data/news";
+import { siteConfig } from "@/lib/site";
 
 export const revalidate = 3600;
 
@@ -14,6 +16,10 @@ export async function generateStaticParams() {
   return news.map((n) => ({ slug: n.slug }));
 }
 
+// Cover images stored as data URLs can't be crawled → fall back to the site OG.
+const ogFor = (cover: string | null) =>
+  cover && cover.startsWith("/") ? cover : siteConfig.ogImage;
+
 export async function generateMetadata({
   params,
 }: {
@@ -21,7 +27,32 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const item = await getNewsBySlug(slug);
-  return { title: item?.title ?? "Berita" };
+  if (!item) return { title: "Berita" };
+
+  const description = snippet(item.content, 160);
+  const url = `${siteConfig.url}/berita/${item.slug}`;
+  const image = ogFor(item.coverImageUrl);
+
+  return {
+    title: item.title,
+    description,
+    alternates: { canonical: `/berita/${item.slug}` },
+    openGraph: {
+      type: "article",
+      url,
+      title: item.title,
+      description,
+      images: [{ url: image, width: 1200, height: 630, alt: item.title }],
+      publishedTime: item.publishedAt || undefined,
+      authors: [item.author],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: item.title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function BeritaDetailPage({
@@ -33,16 +64,38 @@ export default async function BeritaDetailPage({
   const item = await getNewsBySlug(slug);
   if (!item) notFound();
 
-  // Same date the news card shows (dateLabel), without the "Jakarta, " prefix.
-  const dateLabel = item.dateLabel.split(/,\s*/).pop() ?? item.dateLabel;
+  // Full dateline incl. the "Jakarta, " prefix (e.g. "Jakarta, 13 Agustus 2025").
+  const dateLabel = item.dateLabel;
 
   // The dateline is prepended automatically (bold) from dateLabel — the stored
   // content no longer includes "Jakarta, … –" (Figma 298:1300).
   const leadDate = item.dateLabel ? `${item.dateLabel} – ` : "";
   const bodyRest = item.content;
 
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: item.title,
+    description: snippet(item.content, 160),
+    image: [`${siteConfig.url}${ogFor(item.coverImageUrl)}`],
+    datePublished: item.publishedAt || undefined,
+    dateModified: item.publishedAt || undefined,
+    author: { "@type": "Organization", name: item.author },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      logo: { "@type": "ImageObject", url: `${siteConfig.url}/images/logo-white-trim.png` },
+    },
+    mainEntityOfPage: `${siteConfig.url}/berita/${item.slug}`,
+    articleSection: item.tags,
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
+      />
       {/* Hero band — same image as the Berita & Kegiatan page + tab bar */}
       <section className="relative overflow-hidden bg-surface">
         <div className="relative h-[170px] w-full sm:h-[210px]">
@@ -100,7 +153,7 @@ export default async function BeritaDetailPage({
               <hr className="my-8 border-[#e5e5e5]" />
 
             {/* Body (Figma 298:1300) — leading date is bold */}
-            <div className="whitespace-pre-line text-body leading-[1.8] text-[#262626]">
+            <div className="whitespace-pre-line text-body font-medium leading-[1.8] text-[#262626]">
               {leadDate && <span className="font-bold">{leadDate}</span>}
               {bodyRest}
             </div>

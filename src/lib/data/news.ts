@@ -17,17 +17,23 @@ export type NewsItem = NewsCardData & {
 
 type Row = typeof schema.news.$inferSelect;
 
-const toNewsItem = (r: Row): NewsItem => ({
-  slug: r.slug,
-  title: r.title,
-  coverImageUrl: r.coverImageUrl,
-  tags: r.tags ?? [],
-  dateLabel: formatDateId(r.publishedAt, r.dateLabel),
-  content: r.content,
-  author: r.author,
-  publishedAt: r.publishedAt ?? "",
-  caption: r.caption ?? undefined,
-});
+const toNewsItem = (r: Row): NewsItem => {
+  // Jakarta dateline, press-release style: "Jakarta, 13 Agustus 2025". The
+  // detail page keeps the full string for the article lead and strips the
+  // "Jakarta, " prefix for the plain meta date (see berita/[slug]/page.tsx).
+  const date = formatDateId(r.publishedAt, r.dateLabel);
+  return {
+    slug: r.slug,
+    title: r.title,
+    coverImageUrl: r.coverImageUrl,
+    tags: r.tags ?? [],
+    dateLabel: date ? `Jakarta, ${date}` : date,
+    content: r.content,
+    author: r.author,
+    publishedAt: r.publishedAt ?? "",
+    caption: r.caption ?? undefined,
+  };
+};
 
 /**
  * Published news, newest first (same ordering as the admin list).

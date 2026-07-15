@@ -17,7 +17,7 @@ export const revalidate = 3600;
 function JobCard({ job }: { job: JobListing }) {
   return (
     <article
-      className="group glass-rim relative transform-gpu rounded-[33px] px-[31px] py-[25px] shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-transform duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-2"
+      className="group glass-rim relative transform-gpu rounded-[29px] px-[31px] py-[25px] shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-transform duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-2"
       style={{
         backgroundImage:
           "linear-gradient(157.31deg, rgba(237,245,255,0.46) 11.19%, rgba(255,255,255,0) 99.23%)",
@@ -27,12 +27,12 @@ function JobCard({ job }: { job: JobListing }) {
           animated, so fading a static-shadow layer keeps the lift smooth. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[33px] opacity-0 shadow-[0px_18px_40px_rgba(0,0,0,0.28)] transition-opacity duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-[29px] opacity-0 shadow-[0px_18px_40px_rgba(0,0,0,0.28)] transition-opacity duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
       />
       {/* Hover sheen — brightens the glass slightly on hover */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[33px] opacity-0 transition-opacity duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-[29px] opacity-0 transition-opacity duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:opacity-100"
         style={{
           backgroundImage:
             "linear-gradient(157.31deg, rgba(237,245,255,0.28) 11.19%, rgba(255,255,255,0) 99.23%)",
@@ -110,7 +110,7 @@ export default async function KarirPage() {
                 <br />
                 Bersama Tarumanagara
               </h2>
-              <p className="max-w-[190px] pt-2 text-body font-medium text-[#f5f5f5]">
+              <p className="pt-2 text-body font-medium text-[#f5f5f5] md:max-w-[190px]">
                 Temukan peluang untuk bertumbuh secara profesional dalam
                 lingkungan yang menjunjung integritas, kolaborasi, dan inovasi.
               </p>
@@ -125,23 +125,35 @@ export default async function KarirPage() {
               </p>
             </Reveal>
           ) : (
-            <div className="mt-14 flex flex-col gap-10 md:flex-row md:items-start md:gap-16">
-              <div className="flex flex-1 flex-col gap-10">
-                {leftJobs.map((job, i) => (
+            <>
+              {/* Mobile: a single column that keeps the listing's original order
+                  (the even/odd split below would scramble the sequence here). */}
+              <div className="mt-14 flex flex-col gap-10 md:hidden">
+                {jobs.map((job, i) => (
                   <Reveal key={job.id} delay={i * 0.05}>
                     <JobCard job={job} />
                   </Reveal>
                 ))}
               </div>
-              {/* Right column offset down so its cards sit between the left ones */}
-              <div className="flex flex-1 flex-col gap-10 md:mt-[88px]">
-                {rightJobs.map((job, i) => (
-                  <Reveal key={job.id} delay={i * 0.05}>
-                    <JobCard job={job} />
-                  </Reveal>
-                ))}
+              {/* Desktop: two staggered columns (Figma 222:580) */}
+              <div className="mt-14 hidden gap-16 md:flex md:items-start">
+                <div className="flex flex-1 flex-col gap-10">
+                  {leftJobs.map((job, i) => (
+                    <Reveal key={job.id} delay={i * 0.05}>
+                      <JobCard job={job} />
+                    </Reveal>
+                  ))}
+                </div>
+                {/* Right column offset down so its cards sit between the left ones */}
+                <div className="flex flex-1 flex-col gap-10 md:mt-[88px]">
+                  {rightJobs.map((job, i) => (
+                    <Reveal key={job.id} delay={i * 0.05}>
+                      <JobCard job={job} />
+                    </Reveal>
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </section>

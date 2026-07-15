@@ -1,7 +1,7 @@
 "use server";
 
 import { desc, eq } from "drizzle-orm";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { revalidatePath, unstable_cache, updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
@@ -10,15 +10,16 @@ import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
 import type { AdminJob, AdminNews, Application } from "./types";
 
 // Invalidate the Data Cache + affected public routes after a write.
-// `"max"` = stale-while-revalidate (Next 16 signature).
 function revalidateNews() {
-  revalidateTag(CACHE_TAGS.news, "max");
+  // News publication changes must be visible on the very next public request.
+  // updateTag expires the cached query immediately instead of serving stale data.
+  updateTag(CACHE_TAGS.news);
   revalidatePath("/");
   revalidatePath("/berita");
   revalidatePath("/berita/[slug]", "page");
 }
 function revalidateJobs() {
-  revalidateTag(CACHE_TAGS.jobs, "max");
+  updateTag(CACHE_TAGS.jobs);
   revalidatePath("/karir");
 }
 
@@ -64,14 +65,24 @@ export async function listNews(): Promise<AdminNews[]> {
   return cachedNews();
 }
 
-export async function saveNews(item: AdminNews): Promise<void> {
+export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
   await requireAdmin();
   // Enforce the cover-image size cap server-side (base64 data URLs).
   if (
     item.coverImageUrl.startsWith("data:") &&
     dataUrlBytes(item.coverImageUrl) > MAX_IMAGE_SIZE
   ) {
-    throw new Error("Ukuran gambar sampul melebihi batas.");
+    return { error: "Ukuran gambar sampul melebihi batas." };
+  }
+  // Reject a slug already taken by a DIFFERENT article (unique constraint would
+  // otherwise fail with an opaque error). Return the message so the client can
+  // surface it — thrown errors get redacted in production.
+  const [clash] = await db
+    .select({ id: schema.news.id })
+    .from(schema.news)
+    .where(eq(schema.news.slug, item.slug));
+  if (clash && clash.id !== item.id) {
+    return { error: "Slug sudah dipakai artikel lain. Ubah judul atau slug." };
   }
   const values = {
     id: item.id,
@@ -106,6 +117,7 @@ export async function saveNews(item: AdminNews): Promise<void> {
       },
     });
   revalidateNews();
+  return {};
 }
 
 export async function deleteNews(id: string): Promise<void> {
@@ -114,18 +126,22 @@ export async function deleteNews(id: string): Promise<void> {
   revalidateNews();
 }
 
-export async function togglePublish(id: string): Promise<void> {
+// Returns the new published state (authoritative), or null if the row is gone
+// (e.g. deleted by another admin) so the client can reconcile.
+export async function togglePublish(id: string): Promise<{ published: boolean } | null> {
   await requireAdmin();
   const [row] = await db
     .select({ published: schema.news.published })
     .from(schema.news)
     .where(eq(schema.news.id, id));
-  if (!row) return;
+  if (!row) return null;
+  const next = !row.published;
   await db
     .update(schema.news)
-    .set({ published: !row.published, updatedAt: new Date().toISOString() })
+    .set({ published: next, updatedAt: new Date().toISOString() })
     .where(eq(schema.news.id, id));
   revalidateNews();
+  return { published: next };
 }
 
 // ── Lowongan ──────────────────────────────────────────────────────────────
@@ -175,18 +191,20 @@ export async function deleteJob(id: string): Promise<void> {
   revalidateJobs();
 }
 
-export async function toggleJobOpen(id: string): Promise<void> {
+export async function toggleJobOpen(id: string): Promise<{ isOpen: boolean } | null> {
   await requireAdmin();
   const [row] = await db
     .select({ isOpen: schema.jobs.isOpen })
     .from(schema.jobs)
     .where(eq(schema.jobs.id, id));
-  if (!row) return;
+  if (!row) return null;
+  const next = !row.isOpen;
   await db
     .update(schema.jobs)
-    .set({ isOpen: !row.isOpen })
+    .set({ isOpen: next })
     .where(eq(schema.jobs.id, id));
   revalidateJobs();
+  return { isOpen: next };
 }
 
 // ── Lamaran ───────────────────────────────────────────────────────────────
@@ -215,6 +233,12 @@ export async function listApplications(): Promise<Application[]> {
 export async function deleteApplication(id: string): Promise<void> {
   await requireAdmin();
   await db.delete(schema.applications).where(eq(schema.applications.id, id));
+}
+
+/** The signed-in admin's identity (for the panel avatar/header). */
+export async function getCurrentAdmin(): Promise<{ email: string }> {
+  const session = await requireAdmin();
+  return { email: session.email };
 }
 
 /** Fetch a single CV file (base64) for download. */

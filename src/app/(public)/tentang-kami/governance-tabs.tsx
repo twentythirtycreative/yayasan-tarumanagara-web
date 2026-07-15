@@ -189,7 +189,7 @@ function PersonCard({
         // Rise is a PURE GPU transform, transitioned on its own — no box-shadow
         // in the transition (box-shadow can't be GPU-animated and would stutter
         // the lift). The elevated shadow fades via the opacity layer below.
-        "group relative h-[378px] w-[280px] shrink-0 transform-gpu cursor-pointer text-left transition-transform duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:w-[299px]",
+        "group relative h-[378px] w-[296px] shrink-0 transform-gpu cursor-pointer text-left transition-transform duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform sm:w-[316px]",
         selected ? "z-10 -translate-y-12" : "",
       )}
     >
@@ -197,17 +197,17 @@ function PersonCard({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 rounded-[20px] shadow-[0px_22px_42px_rgba(0,0,0,0.2)] transition-opacity duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "pointer-events-none absolute inset-0 rounded-[16px] shadow-[0px_22px_42px_rgba(0,0,0,0.2)] transition-opacity duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
           selected ? "opacity-100" : "opacity-0",
         )}
       />
       {/* Clipped content (rounded image + glass box) */}
-      <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-[#fafafa] bg-[#d9d9d9]">
+      <div className="absolute inset-0 overflow-hidden rounded-[16px] border border-[#fafafa] bg-[#d9d9d9]">
         <Image
           src={person.photo}
           alt={person.name}
           fill
-          sizes="299px"
+          sizes="316px"
           priority={priority}
           draggable={false}
           style={{ objectPosition: person.pos }}
@@ -217,11 +217,11 @@ function PersonCard({
           )}
         />
         {/* Glass name/role box (Figma 376:999) — glass surface + white rim */}
-        <div className="glass-rim absolute inset-x-0 bottom-0 flex h-[104px] flex-col justify-center rounded-b-[20px] border-t border-white/40 bg-[rgba(229,229,229,0.45)] px-[22px] backdrop-blur-[10px] backdrop-saturate-150">
-          <p className="text-[16px] leading-[19px] font-extrabold text-[#262626]">
+        <div className="glass-rim absolute inset-x-0 bottom-0 flex h-[118px] flex-col justify-center rounded-b-[16px] border-t border-white/40 bg-[rgba(255,255,255,0.45)] px-[22px] backdrop-blur-[18px] backdrop-saturate-150">
+          <p className="text-[18px] leading-[22px] font-extrabold text-[#262626]">
             {person.name}
           </p>
-          <p className="mt-1.5 text-[12px] leading-[16px] font-medium text-[#262626]">
+          <p className="mt-2.5 text-[12px] leading-[16px] font-medium text-[#262626]">
             {person.role}
           </p>
         </div>

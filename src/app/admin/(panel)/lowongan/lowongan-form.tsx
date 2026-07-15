@@ -8,10 +8,27 @@ import { ChevronLeft, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdmin, type AdminJob } from "../../_store";
 import { useConfirm } from "../confirm";
+import { FieldError } from "@/components/form-error";
+import { GlassSelect } from "@/components/glass-select";
 
 const field =
   "w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-[#014aaf] focus:ring-2 focus:ring-[#014aaf]/20";
+const fieldErr =
+  "w-full rounded-xl border border-[#dc2626] bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/20";
 const labelCls = "text-sm font-medium text-ink/80";
+
+type LowonganErrors = { title?: string; desc?: string };
+
+function validateLowongan(v: { title: string; desc: string }): LowonganErrors {
+  const errors: LowonganErrors = {};
+  if (!v.title.trim()) errors.title = "Judul posisi wajib diisi.";
+  else if (v.title.trim().length < 3)
+    errors.title = "Judul posisi minimal 3 karakter.";
+  if (!v.desc.trim()) errors.desc = "Deskripsi wajib diisi.";
+  else if (v.desc.trim().length < 10)
+    errors.desc = "Deskripsi terlalu pendek (minimal 10 karakter).";
+  return errors;
+}
 
 export function LowonganForm({ initial }: { initial?: AdminJob }) {
   const router = useRouter();
@@ -21,12 +38,27 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
 
   const [title, setTitle] = useState(initial?.title ?? "");
   const [desc, setDesc] = useState(initial?.desc ?? "");
-  const [type, setType] = useState(initial?.type ?? "Fulltime");
+  const [type, setType] = useState(initial?.type ?? "Full-Time");
   const [location, setLocation] = useState(initial?.location ?? "Work From Office");
   const [isOpen, setIsOpen] = useState(initial?.isOpen ?? true);
+  const [errors, setErrors] = useState<LowonganErrors>({});
+  const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const revalidate = (patch: Partial<{ title: string; desc: string }>) => {
+    if (!attempted) return;
+    setErrors(validateLowongan({ title, desc, ...patch }));
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAttempted(true);
+    const nextErrors = validateLowongan({ title, desc });
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error("Lengkapi dulu bagian yang wajib diisi.");
+      return;
+    }
     const ok = await confirm({
       title: editing ? "Simpan perubahan?" : "Tambah lowongan?",
       description: editing
@@ -45,21 +77,23 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
       isOpen,
     };
     try {
+      setSaving(true);
       await saveJob(item);
       toast.success(editing ? "Perubahan disimpan" : "Lowongan ditambahkan");
       router.push("/admin/lowongan");
     } catch {
+      setSaving(false);
       toast.error("Gagal menyimpan lowongan. Coba lagi.");
     }
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-6xl">
       <Link
         href="/admin/lowongan"
-        className="glass-rim glass-btn inline-flex h-[46px] items-center gap-1 rounded-[86px] pl-2 pr-6 text-[18px] font-semibold text-[#014aaf] transition-transform hover:scale-[1.03]"
+        className="glass-rim glass-btn inline-flex h-10 items-center gap-1 rounded-[86px] pl-1.5 pr-4 text-sm font-semibold text-[#014aaf] transition-transform hover:scale-[1.03] sm:h-[46px] sm:pl-2 sm:pr-6 sm:text-[18px]"
       >
-        <ChevronLeft className="h-6 w-6" strokeWidth={2.25} /> Kembali
+        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.25} /> Kembali
       </Link>
       <h1 className="mt-4 text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">
         {editing ? "Sunting Lowongan" : "Tambah Lowongan"}
@@ -67,36 +101,51 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
 
       <form
         onSubmit={submit}
-        className="glass-rim glass-card mt-6 flex flex-col gap-5 rounded-[22px] p-6"
+        noValidate
+        className="glass-rim glass-card mt-6 flex flex-col gap-5 rounded-[18px] p-6"
       >
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Judul Posisi</label>
           <input
-            required
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className={field}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              revalidate({ title: e.target.value });
+            }}
+            aria-invalid={Boolean(errors.title)}
+            className={errors.title ? fieldErr : field}
             placeholder="mis. Human Resources Generalist Manager"
           />
+          <FieldError message={errors.title} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <label className={labelCls}>Tipe</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={field}>
-              <option>Fulltime</option>
-              <option>Parttime</option>
-              <option>Kontrak</option>
-              <option>Magang</option>
-            </select>
+            <GlassSelect
+              value={type}
+              onChange={setType}
+              triggerClassName={field}
+              options={[
+                { value: "Full-Time", label: "Full-Time" },
+                { value: "Part-Time", label: "Part-Time" },
+                { value: "Kontrak", label: "Kontrak" },
+                { value: "Magang", label: "Magang" },
+              ]}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <label className={labelCls}>Lokasi Kerja</label>
-            <select value={location} onChange={(e) => setLocation(e.target.value)} className={field}>
-              <option>Work From Office</option>
-              <option>Work From Home</option>
-              <option>Hybrid</option>
-            </select>
+            <GlassSelect
+              value={location}
+              onChange={setLocation}
+              triggerClassName={field}
+              options={[
+                { value: "Work From Office", label: "Work From Office" },
+                { value: "Work From Home", label: "Work From Home" },
+                { value: "Hybrid", label: "Hybrid" },
+              ]}
+            />
           </div>
         </div>
 
@@ -104,11 +153,17 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
           <label className={labelCls}>Deskripsi</label>
           <textarea
             value={desc}
-            onChange={(e) => setDesc(e.target.value)}
+            onChange={(e) => {
+              setDesc(e.target.value);
+              revalidate({ desc: e.target.value });
+            }}
             rows={5}
-            className={cn(field, "resize-y leading-relaxed")}
+            data-lenis-prevent
+            aria-invalid={Boolean(errors.desc)}
+            className={cn(errors.desc ? fieldErr : field, "resize-y leading-relaxed")}
             placeholder="Deskripsi singkat tanggung jawab posisi…"
           />
+          <FieldError message={errors.desc} />
         </div>
 
         <label className="flex cursor-pointer items-center justify-between border-t border-black/5 pt-4">
@@ -132,9 +187,19 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
 
         <button
           type="submit"
-          className="inline-flex h-11 items-center justify-center gap-2 glass-rim glass-btn-primary rounded-xl text-sm font-semibold transition-transform hover:scale-[1.02]"
+          disabled={saving}
+          className="inline-flex h-11 items-center justify-center gap-2 glass-rim rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] disabled:opacity-70 disabled:hover:scale-100"
         >
-          <Save className="h-4 w-4" /> {editing ? "Simpan Perubahan" : "Simpan Lowongan"}
+          {saving ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Menyimpan…
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> {editing ? "Simpan Perubahan" : "Simpan Lowongan"}
+            </>
+          )}
         </button>
       </form>
     </div>

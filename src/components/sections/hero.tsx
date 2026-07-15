@@ -15,13 +15,17 @@ const imgClass =
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0a0e13]">
+    <section className="relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0a0e13] [@media(max-height:800px)]:pt-[64px]">
       {/* Background skyscraper photo, desaturated to B&W as in Figma */}
       <Image src="/images/hero-building.jpg" alt="Gedung Tarumanagara" fill priority sizes="100vw" className={`z-0 ${imgClass}`} />
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/15 via-black/5 to-black/45" />
 
-      {/* "Membangun Nilai," bar — sits BEHIND the central building peak (z-10) */}
-      <div className="relative z-10 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center">
+      {/* "Membangun Nilai," bar — normally sits BEHIND the central building peak
+          (z-10), so a little overlap looks intentional. Only once the viewport is
+          wide enough that the building has grown to cover the text (min-[2000px])
+          does it flip IN FRONT (z-30 > z-20). Tune the 2000px threshold to the
+          exact point where the building fully covers the text. */}
+      <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center sm:z-10 min-[2000px]:z-30">
         <motion.span
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
