@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Download,
@@ -15,7 +15,6 @@ import { useAdmin } from "../../_store";
 import { getApplicationCv } from "../../actions";
 import { useConfirm } from "../confirm";
 import { FilterMenu } from "../filter-menu";
-import { positions } from "@/lib/validators/application";
 import { parseDbTimestamp } from "@/lib/format-date";
 import { exportApplicationsExcel } from "./export-excel";
 
@@ -175,6 +174,13 @@ export default function AdminLamaranList() {
   const [q, setQ] = useState("");
   const [exporting, setExporting] = useState(false);
   const [selected, setSelected] = useState<Record<string, string[]>>({ position: [] });
+  const positionOptions = useMemo(
+    () =>
+      [...new Set(applications.map((application) => application.position))]
+        .sort((a, b) => a.localeCompare(b, "id"))
+        .map((position) => ({ value: position, label: position })),
+    [applications],
+  );
 
   const toggleFilter = (key: string, value: string) =>
     setSelected((prev) => {
@@ -234,7 +240,7 @@ export default function AdminLamaranList() {
             {
               key: "position",
               label: "Posisi yang Dilamar",
-              options: positions.map((p) => ({ value: p, label: p })),
+              options: positionOptions,
             },
           ]}
           selected={selected}

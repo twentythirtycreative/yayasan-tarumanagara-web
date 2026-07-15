@@ -1,5 +1,6 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import {
   applicationSchema,
@@ -46,10 +47,35 @@ export async function submitApplication(
   }
 
   try {
+    // The browser sends the job ID. Resolve it again on the server so a stale
+    // or tampered form cannot submit an application for a closed position.
+    const [job] = await db
+      .select({ title: schema.jobs.title })
+      .from(schema.jobs)
+      .where(
+        and(
+          eq(schema.jobs.id, parsed.data.position),
+          eq(schema.jobs.isOpen, true),
+        ),
+      )
+      .limit(1);
+
+    if (!job) {
+      return {
+        ok: false,
+        message:
+          "Posisi yang dipilih sudah tidak tersedia. Silakan pilih lowongan lain.",
+        errors: { position: "Posisi sudah tidak tersedia" },
+      };
+    }
+
     // Turso has no object storage — store the CV file bytes as a BLOB.
     const buffer = Buffer.from(await cv.arrayBuffer());
     await db.insert(schema.applications).values({
       ...parsed.data,
+      // Keep a title snapshot so historical applications remain readable even
+      // if the job is renamed or removed later.
+      position: job.title,
       cvName: cv.name,
       cvType: cv.type,
       cvData: buffer,

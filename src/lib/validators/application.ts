@@ -1,14 +1,5 @@
 import { z } from "zod";
 
-export const positions = [
-  "Staff Pendidikan",
-  "Staff Kesehatan",
-  "Staff Inovasi & Pengembangan",
-  "Staff Properti & Bangunan",
-  "Staff Fasilitas Harian",
-  "Lainnya",
-] as const;
-
 /** Shared shape for the "Kirim CV" job application form (client + server). */
 export const applicationSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap wajib diisi"),
