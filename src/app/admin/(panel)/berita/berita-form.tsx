@@ -256,18 +256,7 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
             <label className={labelCls}>Tags</label>
             <TagInput value={tags} onChange={setTags} suggestions={NEWS_TAGS} />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className={labelCls}>Keterangan Gambar Sampul (opsional)</label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              rows={2}
-              data-lenis-prevent
-              className={cn(field, "resize-y")}
-              placeholder="Keterangan di bawah gambar sampul artikel"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-1 flex-col gap-1.5">
             <label className={labelCls}>Isi Konten</label>
             <textarea
               value={content}
@@ -275,12 +264,11 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
                 setContent(e.target.value);
                 revalidate({ content: e.target.value });
               }}
-              rows={10}
               // Opt out of Lenis smooth-scroll so the mouse wheel scrolls INSIDE
               // the textarea instead of the page.
               data-lenis-prevent
               aria-invalid={Boolean(errors.content)}
-              className={cn(errors.content ? fieldErr : field, "resize-y leading-relaxed")}
+              className={cn(errors.content ? fieldErr : field, "min-h-[220px] flex-1 resize-y leading-relaxed")}
               placeholder="Tulis isi artikel di sini…"
             />
             <FieldError message={errors.content} />
@@ -386,6 +374,18 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
               <p className="mt-1 truncate text-xs text-ink/50">{coverName}</p>
             )}
             <FieldError message={errors.coverImageUrl} />
+
+            <div className="mt-4 flex flex-col gap-1.5 border-t border-black/5 pt-4">
+              <label className={labelCls}>Keterangan Gambar (opsional)</label>
+              <textarea
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                rows={2}
+                data-lenis-prevent
+                className={cn(field, "resize-y")}
+                placeholder="Keterangan di bawah gambar sampul artikel"
+              />
+            </div>
           </div>
 
           <button
