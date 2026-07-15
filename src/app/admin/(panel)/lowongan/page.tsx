@@ -128,23 +128,30 @@ export default function AdminLowonganList() {
                 type="button"
                 title={j.isOpen ? "Tutup lowongan" : "Buka lowongan"}
                 onClick={async () => {
-                  const ok = await confirm(
-                    j.isOpen
+                  const ok = await confirm({
+                    ...(j.isOpen
                       ? {
                           title: "Tutup lowongan?",
                           description: `"${j.title}" akan ditandai ditutup dan tidak menerima pelamar baru.`,
                           confirmText: "Tutup",
-                          variant: "danger",
+                          variant: "danger" as const,
                         }
                       : {
                           title: "Buka lowongan?",
                           description: `"${j.title}" akan tampil sebagai lowongan yang dibuka.`,
                           confirmText: "Buka",
-                          variant: "primary",
-                        },
-                  );
+                          variant: "primary" as const,
+                        }),
+                    onConfirm: async () => {
+                      try {
+                        await toggleJobOpen(j.id);
+                      } catch (error) {
+                        toast.error("Gagal mengubah status lowongan. Coba lagi.");
+                        throw error;
+                      }
+                    },
+                  });
                   if (!ok) return;
-                  await toggleJobOpen(j.id);
                   toast.success(j.isOpen ? "Lowongan ditutup" : "Lowongan dibuka");
                 }}
                 className="glass-rim glass-btn grid h-8 w-8 place-items-center rounded-lg text-ink/60 hover:text-[#014aaf]"
@@ -167,9 +174,16 @@ export default function AdminLowonganList() {
                     description: `"${j.title}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
                     confirmText: "Hapus",
                     variant: "danger",
+                    onConfirm: async () => {
+                      try {
+                        await deleteJob(j.id);
+                      } catch (error) {
+                        toast.error("Gagal menghapus lowongan. Coba lagi.");
+                        throw error;
+                      }
+                    },
                   });
                   if (!ok) return;
-                  await deleteJob(j.id);
                   toast.success("Lowongan dihapus");
                 }}
                 className="glass-rim glass-btn grid h-8 w-8 place-items-center rounded-lg text-ink/60 hover:text-[#dc2626]"

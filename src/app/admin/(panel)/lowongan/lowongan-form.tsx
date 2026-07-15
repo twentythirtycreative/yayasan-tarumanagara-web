@@ -59,15 +59,6 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
       toast.error("Lengkapi dulu bagian yang wajib diisi.");
       return;
     }
-    const ok = await confirm({
-      title: editing ? "Simpan perubahan?" : "Tambah lowongan?",
-      description: editing
-        ? "Perubahan pada lowongan ini akan disimpan."
-        : "Lowongan baru akan ditambahkan ke daftar.",
-      confirmText: editing ? "Simpan" : "Tambah",
-      variant: "primary",
-    });
-    if (!ok) return;
     const item: AdminJob = {
       id: initial?.id ?? `j_${Date.now()}`,
       title: title.trim(),
@@ -76,15 +67,27 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
       location: location.trim(),
       isOpen,
     };
-    try {
-      setSaving(true);
-      await saveJob(item);
-      toast.success(editing ? "Perubahan disimpan" : "Lowongan ditambahkan");
-      router.push("/admin/lowongan");
-    } catch {
-      setSaving(false);
-      toast.error("Gagal menyimpan lowongan. Coba lagi.");
-    }
+    const ok = await confirm({
+      title: editing ? "Simpan perubahan?" : "Tambah lowongan?",
+      description: editing
+        ? "Perubahan pada lowongan ini akan disimpan."
+        : "Lowongan baru akan ditambahkan ke daftar.",
+      confirmText: editing ? "Simpan Perubahan" : "Simpan Lowongan",
+      variant: "primary",
+      onConfirm: async () => {
+        try {
+          setSaving(true);
+          await saveJob(item);
+        } catch (error) {
+          setSaving(false);
+          toast.error("Gagal menyimpan lowongan. Coba lagi.");
+          throw error;
+        }
+      },
+    });
+    if (!ok) return;
+    toast.success(editing ? "Perubahan disimpan" : "Lowongan ditambahkan");
+    router.push("/admin/lowongan");
   };
 
   return (

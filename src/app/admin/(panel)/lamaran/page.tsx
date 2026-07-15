@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Search,
   FileSpreadsheet,
+  LoaderCircle,
 } from "lucide-react";
 import { useAdmin } from "../../_store";
 import { getApplicationCv } from "../../actions";
@@ -44,16 +45,19 @@ function RowActions({
   onDownload,
   onDelete,
 }: {
-  onDownload: () => void;
+  onDownload: () => Promise<void>;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const close = () => setOpen(false);
+    const close = () => {
+      if (!downloading) setOpen(false);
+    };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
@@ -63,7 +67,7 @@ function RowActions({
       window.removeEventListener("resize", close);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, downloading]);
 
   const toggle = () => {
     const r = btnRef.current?.getBoundingClientRect();
@@ -88,28 +92,47 @@ function RowActions({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <button
+            type="button"
+            aria-label="Tutup menu aksi"
+            disabled={downloading}
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
           <div
             style={{ top: pos.top, left: pos.left }}
             className="fixed z-50 w-44 rounded-2xl border border-black/[0.06] bg-white p-1.5 shadow-[0px_16px_40px_rgba(0,34,79,0.18)]"
           >
             <button
               type="button"
-              onClick={() => {
-                onDownload();
-                setOpen(false);
+              disabled={downloading}
+              aria-busy={downloading}
+              onClick={async () => {
+                setDownloading(true);
+                try {
+                  await onDownload();
+                } finally {
+                  setDownloading(false);
+                  setOpen(false);
+                }
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-ink/75 transition-colors hover:bg-black/[0.04] hover:text-[#014aaf]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-ink/75 transition-colors hover:bg-black/[0.04] hover:text-[#014aaf] disabled:cursor-wait"
             >
-              <Download className="h-4 w-4 text-[#014aaf]" /> Unduh CV
+              {downloading ? (
+                <LoaderCircle className="h-4 w-4 animate-spin text-[#014aaf]" />
+              ) : (
+                <Download className="h-4 w-4 text-[#014aaf]" />
+              )}
+              Unduh CV
             </button>
             <button
               type="button"
+              disabled={downloading}
               onClick={() => {
                 onDelete();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-[#dc2626] transition-colors hover:bg-[#fdecec]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-[#dc2626] transition-colors hover:bg-[#fdecec] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Trash2 className="h-4 w-4" /> Hapus
             </button>
@@ -136,9 +159,16 @@ function ApplicationRowActions({ item }: { item: Application }) {
           description: `Lamaran dari ${item.fullName} akan dihapus permanen.`,
           confirmText: "Hapus",
           variant: "danger",
+          onConfirm: async () => {
+            try {
+              await deleteApplication(item.id);
+            } catch (error) {
+              toast.error("Gagal menghapus lamaran. Coba lagi.");
+              throw error;
+            }
+          },
         });
         if (!ok) return;
-        await deleteApplication(item.id);
         toast.success("Lamaran dihapus");
       }}
     />
