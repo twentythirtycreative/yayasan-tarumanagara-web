@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { applicationSchema, positions } from "@/lib/validators/application";
+import { applicationSchema } from "@/lib/validators/application";
 import {
   ACCEPTED_CV_TYPES,
   MAX_CV_SIZE,
@@ -67,7 +67,11 @@ function SubmitButton({ sent }: { sent: boolean }) {
   );
 }
 
-export function CvForm() {
+export function CvForm({
+  positions,
+}: {
+  positions: Array<{ id: string; title: string }>;
+}) {
   const [state, formAction] = useActionState(submitApplication, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [fileName, setFileName] = useState("");
@@ -144,8 +148,8 @@ export function CvForm() {
   );
 
   const positionOptions = useMemo<SelectOption[]>(
-    () => positions.map((p) => ({ value: p, label: p })),
-    [],
+    () => positions.map((job) => ({ value: job.id, label: job.title })),
+    [positions],
   );
 
   useEffect(() => {
@@ -254,7 +258,9 @@ export function CvForm() {
             setPosition(v);
             revalidate({ position: v });
           }}
-          placeholder=""
+          placeholder={
+            positions.length > 0 ? "Pilih posisi" : "Belum ada lowongan dibuka"
+          }
           triggerClassName={cn(
             "min-h-[27px] border-b-[1.5px] pb-1.5 text-[16px] font-medium text-[#262626]",
             errors.position ? "border-[#dc2626]" : "border-[#d9d9d9]",

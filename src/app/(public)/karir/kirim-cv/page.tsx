@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { SectionHero } from "@/components/sections/section-hero";
 import { Reveal } from "@/components/motion/reveal";
+import { getOpenJobs } from "@/lib/data/jobs";
 import { CvForm } from "./cv-form";
 
 export const metadata: Metadata = { title: "Kirim CV" };
+export const revalidate = 3600;
 
-export default function KirimCvPage() {
+export default async function KirimCvPage() {
+  const jobs = await getOpenJobs();
+  const positionOptions = jobs.map(({ id, title }) => ({ id, title }));
+
   return (
     <>
       {/* Hero — Figma 222:792 (job-interview photo, B&W) / 222:919 title */}
@@ -59,7 +64,7 @@ export default function KirimCvPage() {
                     "linear-gradient(134.84deg, rgba(237,245,255,0.46) 58.52%, rgba(255,255,255,0) 99.23%)",
                 }}
               >
-                <CvForm />
+                <CvForm positions={positionOptions} />
               </div>
             </Reveal>
           </div>

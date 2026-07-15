@@ -21,6 +21,7 @@ function revalidateNews() {
 function revalidateJobs() {
   updateTag(CACHE_TAGS.jobs);
   revalidatePath("/karir");
+  revalidatePath("/karir/kirim-cv");
 }
 
 // ── Mappers ───────────────────────────────────────────────────────────────
