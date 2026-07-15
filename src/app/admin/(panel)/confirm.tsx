@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AlertTriangle, HelpCircle } from "lucide-react";
+import { AlertTriangle, HelpCircle, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Variant = "danger" | "primary";
@@ -19,6 +19,7 @@ type ConfirmOptions = {
   confirmText?: string;
   cancelText?: string;
   variant?: Variant;
+  onConfirm?: () => void | Promise<void>;
 };
 
 type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
@@ -28,8 +29,10 @@ const ConfirmCtx = createContext<ConfirmFn>(async () => false);
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [opts, setOpts] = useState<ConfirmOptions | null>(null);
   const [resolver, setResolver] = useState<((v: boolean) => void) | null>(null);
+  const [pending, setPending] = useState(false);
 
   const confirm = useCallback<ConfirmFn>((options) => {
+    setPending(false);
     setOpts(options);
     return new Promise<boolean>((resolve) => setResolver(() => resolve));
   }, []);
@@ -37,21 +40,41 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const close = useCallback(
     (value: boolean) => {
       resolver?.(value);
+      setPending(false);
       setResolver(null);
       setOpts(null);
     },
     [resolver],
   );
 
+  const runConfirm = useCallback(async () => {
+    if (!opts || pending) return;
+    if (!opts.onConfirm) {
+      close(true);
+      return;
+    }
+
+    setPending(true);
+    try {
+      await opts.onConfirm();
+      close(true);
+    } catch {
+      // Keep the popup open so the admin can retry or cancel. The caller owns
+      // the operation-specific error feedback.
+      setPending(false);
+    }
+  }, [opts, pending, close]);
+
   useEffect(() => {
     if (!opts) return;
     const onKey = (e: KeyboardEvent) => {
+      if (pending) return;
       if (e.key === "Escape") close(false);
-      if (e.key === "Enter") close(true);
+      if (e.key === "Enter") void runConfirm();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [opts, close]);
+  }, [opts, pending, close, runConfirm]);
 
   const danger = opts?.variant === "danger";
 
@@ -62,6 +85,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <button
             aria-label="Tutup"
+            disabled={pending}
             onClick={() => close(false)}
             className="absolute inset-0 cursor-default bg-[#00224f]/40 backdrop-blur-[3px]"
           />
@@ -89,22 +113,26 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <div className="mt-6 flex justify-end gap-2.5">
               <button
                 type="button"
+                disabled={pending}
                 onClick={() => close(false)}
-                className="glass-rim glass-btn inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-ink/70"
+                className="glass-rim glass-btn inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-ink/70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {opts.cancelText ?? "Batal"}
               </button>
               <button
                 type="button"
                 autoFocus
-                onClick={() => close(true)}
+                disabled={pending}
+                aria-busy={pending}
+                onClick={() => void runConfirm()}
                 className={cn(
-                  "glass-rim inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-white transition-transform hover:scale-[1.02]",
+                  "glass-rim inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-wait disabled:hover:scale-100",
                   danger
                     ? "bg-[#dc2626] shadow-[0px_8px_20px_rgba(220,38,38,0.28)]"
                     : "bg-gradient-to-r from-[#00357d] to-[#0060e3] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)]",
                 )}
               >
+                {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 {opts.confirmText ?? "Konfirmasi"}
               </button>
             </div>

@@ -135,23 +135,30 @@ function NewsRowActions({ item }: { item: NewsItem }) {
       published={item.published}
       editHref={`/admin/berita/${item.id}`}
       onTogglePublish={async () => {
-        const ok = await confirm(
-          item.published
+        const ok = await confirm({
+          ...(item.published
             ? {
                 title: "Matikan publikasi?",
                 description: `"${item.title}" akan disembunyikan dari halaman publik dan menjadi draf.`,
                 confirmText: "Jadikan Draf",
-                variant: "danger",
+                variant: "danger" as const,
               }
             : {
                 title: "Publikasikan berita?",
                 description: `"${item.title}" akan tampil di halaman publik.`,
                 confirmText: "Publikasikan",
-                variant: "primary",
-              },
-        );
+                variant: "primary" as const,
+              }),
+          onConfirm: async () => {
+            try {
+              await togglePublish(item.id);
+            } catch (error) {
+              toast.error("Gagal mengubah status berita. Coba lagi.");
+              throw error;
+            }
+          },
+        });
         if (!ok) return;
-        await togglePublish(item.id);
         toast.success(item.published ? "Dijadikan draf" : "Dipublikasikan");
       }}
       onDelete={async () => {
@@ -160,9 +167,16 @@ function NewsRowActions({ item }: { item: NewsItem }) {
           description: `"${item.title}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
           confirmText: "Hapus",
           variant: "danger",
+          onConfirm: async () => {
+            try {
+              await deleteNews(item.id);
+            } catch (error) {
+              toast.error("Gagal menghapus berita. Coba lagi.");
+              throw error;
+            }
+          },
         });
         if (!ok) return;
-        await deleteNews(item.id);
         toast.success("Berita dihapus");
       }}
     />
