@@ -16,9 +16,14 @@ export async function generateStaticParams() {
   return news.map((n) => ({ slug: n.slug }));
 }
 
-// Cover images stored as data URLs can't be crawled → fall back to the site OG.
-const ogFor = (cover: string | null) =>
-  cover && cover.startsWith("/") ? cover : siteConfig.ogImage;
+// Resolve a crawlable, absolute OG image URL for the article. Admin covers are
+// stored as `data:` URLs (crawlers can't read those) so those are served via the
+// `/berita/[slug]/cover` route; `/path` covers are used directly; else site OG.
+const ogImageFor = (slug: string, cover: string | null): string => {
+  if (cover?.startsWith("data:")) return `${siteConfig.url}/berita/${slug}/cover`;
+  if (cover?.startsWith("/")) return `${siteConfig.url}${cover}`;
+  return `${siteConfig.url}${siteConfig.ogImage}`;
+};
 
 export async function generateMetadata({
   params,
@@ -31,7 +36,7 @@ export async function generateMetadata({
 
   const description = snippet(item.content, 160);
   const url = `${siteConfig.url}/berita/${item.slug}`;
-  const image = ogFor(item.coverImageUrl);
+  const image = ogImageFor(item.slug, item.coverImageUrl);
 
   return {
     title: item.title,
@@ -42,7 +47,7 @@ export async function generateMetadata({
       url,
       title: item.title,
       description,
-      images: [{ url: image, width: 1200, height: 630, alt: item.title }],
+      images: [{ url: image, alt: item.title }],
       publishedTime: item.publishedAt || undefined,
       authors: [item.author],
     },
@@ -77,7 +82,7 @@ export default async function BeritaDetailPage({
     "@type": "NewsArticle",
     headline: item.title,
     description: snippet(item.content, 160),
-    image: [`${siteConfig.url}${ogFor(item.coverImageUrl)}`],
+    image: [ogImageFor(item.slug, item.coverImageUrl)],
     datePublished: item.publishedAt || undefined,
     dateModified: item.publishedAt || undefined,
     author: { "@type": "Organization", name: item.author },
