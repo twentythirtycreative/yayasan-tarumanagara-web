@@ -12,6 +12,7 @@ import {
 } from "@/lib/validators/upload";
 import { countryCodes } from "@/lib/data/country-codes";
 import { FieldError } from "@/components/form-error";
+import { FlagIcon } from "@/components/flag-icon";
 import { GlassSelect, type SelectOption } from "@/components/glass-select";
 import { submitApplication, type ActionState } from "./actions";
 
@@ -135,11 +136,19 @@ export function CvForm({
     () =>
       countryCodes.map((c) => ({
         value: c.iso,
-        label: `${c.flag}  ${c.name}  (${c.dial})`,
+        label: `${c.name} (${c.dial})`,
         keywords: `${c.name} ${c.dial} ${c.iso}`,
+        labelNode: (
+          <span className="flex items-center gap-2.5">
+            <FlagIcon iso={c.iso} />
+            <span>
+              {c.name} ({c.dial})
+            </span>
+          </span>
+        ),
         trigger: (
           <span className="flex items-center gap-1.5">
-            <span>{c.flag}</span>
+            <FlagIcon iso={c.iso} />
             <span>{c.dial}</span>
           </span>
         ),

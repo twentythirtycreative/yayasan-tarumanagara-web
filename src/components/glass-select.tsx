@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 export type SelectOption = {
   value: string;
   label: string;
+  /** Optional rich content shown in the list row (falls back to `label`). */
+  labelNode?: ReactNode;
   /** Optional keywords for search. */
   keywords?: string;
   /** Optional compact content shown in the trigger when selected. */
@@ -116,7 +118,7 @@ export function GlassSelect({
                     o.value === value && "bg-white/50 font-semibold text-[#015ddb]",
                   )}
                 >
-                  {o.label}
+                  {o.labelNode ?? o.label}
                 </button>
               </li>
             ))}
