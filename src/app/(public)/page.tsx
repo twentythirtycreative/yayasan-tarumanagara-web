@@ -52,7 +52,9 @@ export default async function HomePage() {
 
       {/* Sambutan / Welcome */}
       <section id="sambutan" className="relative overflow-x-clip bg-surface pt-28 pb-24 sm:pt-40 sm:pb-32 lg:pt-48 lg:pb-40">
-        {/* Figma 347:828 — soft blue-grey glow band behind the welcome card */}
+        {/* Soft blue-grey glow band behind the welcome card. top-[-80px] pulls it
+            above this section, so it would otherwise wash the bottom of the hero
+            photo — the Hero carries z-10 to paint over the overhang. */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-[-80px] h-[510px] bg-gradient-to-b from-[rgba(193,198,214,0)] via-[#c1c6d6] via-[53.846%] to-[rgba(213,216,226,0)]"
@@ -81,18 +83,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Lembaga & Unit Usaha */}
+      {/* Unit di Dalam Ekosistem Kami */}
       <section className="bg-surface pt-8 pb-16 sm:pt-10 sm:pb-20">
         <div className="site-container">
           <div className="mb-14 h-px w-full bg-[#d9d9d9] sm:mb-20" />
           <Reveal>
-            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <h2 className={sectionTitle}>
-                Lembaga <span className="text-[#e1e1e1]">&</span>
+                Unit di Dalam
                 <br />
-                Unit Usaha
+                Ekosistem Kami
               </h2>
-              <p className="max-w-[560px] text-body font-medium text-[#262626] md:pb-2">
+              <p className="max-w-[560px] text-body font-medium text-[#262626]">
                 Membangun nilai, menciptakan peluang, dan menghadirkan manfaat
                 melalui berbagai unit usaha yang bertumbuh bersama masyarakat.
               </p>

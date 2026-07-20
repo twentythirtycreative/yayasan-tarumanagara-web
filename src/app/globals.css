@@ -56,6 +56,14 @@
   --text-title-1--line-height: 1.15;
   --text-title-1--letter-spacing: -0.01em;
 
+  /* title-1-sm — 28px, between title-1 (32) and title-2 (21). The sambutan
+     welcome heading needs to come down from 32 without dropping to 21, which
+     reads as a card title rather than a statement. Outside the 7-role scale
+     like text-hero / text-meta; kept as a token, not a raw value. */
+  --text-title-1-sm: clamp(1.4375rem, 2.6vw, 28px);
+  --text-title-1-sm--line-height: 1.2;
+  --text-title-1-sm--letter-spacing: -0.01em;
+
   --text-title-2: 1.3125rem; /* 21px */
   --text-title-2--line-height: 1.2;
 

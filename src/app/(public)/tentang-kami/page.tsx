@@ -75,18 +75,25 @@ export default function TentangKamiPage() {
         </div>
       </section>
 
-      {/* Visi — dark band */}
-      <section className="relative overflow-hidden py-24">
+      {/* Visi — dark band. Figma 376:975 has it at 1440x359; trimmed a little
+          under that by preference. Height is pinned rather than left to grow out
+          of the padding, with the content centred inside; py stays as a floor in
+          case the copy wraps to more lines. */}
+      <section className="relative flex items-center overflow-hidden py-16 md:min-h-[320px] md:py-10">
+        {/* Figma 376:975 exports this photo already darkened, then lays a flat
+            25% black over it. Sampling that asset against our source puts it at
+            a uniform 0.69x (sky 0.67, centre 0.72, lower band 0.70, full frame
+            0.690) — a plain multiply, no contrast curve. */}
         <Image
           src="/images/visi-bg.jpg"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover grayscale"
+          className="object-cover grayscale brightness-[0.69]"
         />
         <div className="absolute inset-0 bg-black/25" />
         {/* Content inset deeper than the global margin, matching the Misi row. */}
-        <div className="relative z-10 site-container">
+        <div className="relative z-10 w-full site-container">
           <div className="mx-auto flex max-w-[900px] flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <h2 className={`${heading} text-[#f5f5f5] md:shrink-0 md:whitespace-nowrap`}>
             Visi

@@ -194,14 +194,19 @@ export default async function BeritaDetailPage({
             </p>
 
             {/* Kontak (Figma 298:1312) */}
-            <div className="mt-10 rounded-[10px] border border-[#ececec] bg-white px-[38px] pt-6 pb-8">
-              <p className="text-[17px] font-extrabold text-black">
+            {/* Figma's 17px/38px padding only fits from sm up: on a 375px screen
+                that leaves ~251px inside, and the email needs ~272px. Both step
+                down on mobile, and the address may wrap rather than overflow. */}
+            <div className="mt-10 rounded-[10px] border border-[#ececec] bg-white px-6 pt-6 pb-8 sm:px-[38px]">
+              <p className="text-[15px] font-extrabold text-black sm:text-[17px]">
                 Hubungi Tarumanagara
               </p>
-              <p className="mt-4 text-[17px] font-medium text-black">Media</p>
+              <p className="mt-4 text-[15px] font-medium text-black sm:text-[17px]">
+                Media
+              </p>
               <a
                 href="mailto:media@tarumanagarafoundation.org"
-                className="mt-1 block w-fit text-[17px] font-medium text-[#194b90] underline"
+                className="mt-1 block w-fit max-w-full text-[14px] font-medium break-words text-[#194b90] underline sm:text-[17px]"
               >
                 media@tarumanagarafoundation.org
               </a>

@@ -103,14 +103,16 @@ export default async function KarirPage() {
         />
 
         <div className="relative site-container">
-          <Reveal>
+          {/* pb here rather than bumping the mt-14 on each of the three listing
+              variants below; padding doesn't collapse, so it just adds to it. */}
+          <Reveal className="pb-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
               <h2 className="text-header font-extrabold text-[#dadada] md:shrink-0 md:whitespace-nowrap">
                 Bangun <span className="text-[#f5f5f5]">Karier</span>
                 <br />
                 Bersama Tarumanagara
               </h2>
-              <p className="pt-2 text-body font-medium text-[#f5f5f5] md:max-w-[190px]">
+              <p className="pt-2 text-body font-medium text-[#f5f5f5] md:max-w-[280px]">
                 Temukan peluang untuk bertumbuh secara profesional dalam
                 lingkungan yang menjunjung integritas, kolaborasi, dan inovasi.
               </p>

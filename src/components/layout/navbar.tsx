@@ -39,7 +39,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const contactRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
     setOpen(false);
@@ -66,20 +66,25 @@ export function Navbar() {
       <div className="site-container">
       {/* Figma: translucent navy→blue gradient bar (10% tint), rounded-[52px], h-67 */}
       <nav className="glass-rim flex h-[58px] w-full items-center justify-between gap-[clamp(0.75rem,2vw,1.5rem)] rounded-[52px] bg-[linear-gradient(90deg,rgba(0,53,125,0.1)_0%,rgba(0,96,227,0.1)_100%)] px-5 shadow-[0px_4px_13.8px_0px_rgba(0,0,0,0.07)] backdrop-blur-[6px] sm:h-[67px] sm:px-[25px]">
-        {/* White logo (aspect 199/42) */}
-        <Link href="/" className="relative aspect-[199/42] h-[46px] shrink-0 sm:h-[60px]">
+        {/* White logo — Figma 342:1764 sizes this box 185x39 inside the 67px
+            bar. Must use the *trimmed* asset: logo-white.png is 1980x715 with
+            baked-in vertical padding, so object-contain leaves ~118px of dead
+            space to the right of the mark and shoves the CTA out of the bar. */}
+        <Link href="/" className="relative aspect-[199/42] h-[30px] shrink-0 sm:h-[39px]">
           <Image
-            src="/images/logo-white.png"
+            src="/images/logo-white-trim.png"
             alt="Yayasan Tarumanagara"
             fill
             priority
-            sizes="199px"
+            sizes="185px"
             className="object-contain object-left"
           />
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-[clamp(1.25rem,2.6vw,48px)] text-body text-[#f5f5f5] lg:flex">
+        {/* Desktop links. Figma spaces these 48px apart on a 1200px bar; ours is
+            1032 (--content-max 1080 minus the container's 24px gutters), so the
+            gap scales down by the same ratio — 48 * 1032/1200 ~= 28. */}
+        <ul className="hidden shrink items-center gap-[clamp(1rem,2.2vw,28px)] text-caption text-[#f5f5f5] lg:flex">
           {navLinks.map((link) => (
             <li key={link.href}>
               <Link
@@ -95,22 +100,23 @@ export function Navbar() {
               </Link>
             </li>
           ))}
-        </ul>
 
-        {/* CTA + mobile toggle */}
-        <div className="flex items-center gap-2">
-          {/* Kontak Kami — social dropdown on hover (Figma 332:481) */}
-          <div
+          {/* Kontak Kami — plain nav item that opens the social submenu on
+              hover (Figma 342:1764 / panel 332:481) */}
+          <li
             ref={contactRef}
             onMouseEnter={() => setContactOpen(true)}
             onMouseLeave={() => setContactOpen(false)}
-            className="relative hidden shrink-0 sm:block"
+            className="relative"
           >
             <button
               type="button"
               onClick={() => setContactOpen((v) => !v)}
               aria-expanded={contactOpen}
-              className="glass-rim inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-[52px] bg-gradient-to-r from-[rgba(0,53,125,0.61)] to-[rgba(0,96,227,0.61)] py-[11px] pl-4 pr-3 text-body font-medium text-[#f5f5f5] shadow-[0px_4px_13.8px_0px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-transform hover:scale-[1.03]"
+              className={cn(
+                "inline-flex cursor-pointer items-center gap-1 whitespace-nowrap leading-none transition-opacity",
+                contactOpen ? "font-medium opacity-90" : "font-medium opacity-50 hover:opacity-90",
+              )}
             >
               Kontak Kami
               <ChevronDown
@@ -120,7 +126,7 @@ export function Navbar() {
 
             {contactOpen && (
               // top-full + pt bridges the gap so hover doesn't drop between the
-              // button and the panel.
+              // trigger and the panel.
               <div className="absolute left-0 top-full z-50 pt-[14px]">
                 <div className="glass-rim w-[190px] rounded-[17px] bg-[linear-gradient(90deg,rgba(0,53,125,0.4)_0%,rgba(0,96,227,0.4)_100%)] p-[18px] shadow-[0px_8px_24px_rgba(0,0,0,0.2)] backdrop-blur-[12px]">
                   <ul className="flex flex-col gap-[18px]">
@@ -130,7 +136,7 @@ export function Navbar() {
                           href={c.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 text-[16px] font-medium text-[#f5f5f5] transition-opacity hover:opacity-80"
+                          className="flex items-center gap-3 text-caption font-medium text-[#f5f5f5] transition-opacity hover:opacity-80"
                         >
                           <SocialIcon src={c.icon} />
                           {c.label}
@@ -141,7 +147,20 @@ export function Navbar() {
                 </div>
               </div>
             )}
-          </div>
+          </li>
+        </ul>
+
+        {/* CTA + mobile toggle — never squeezed by the links row. */}
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href={siteConfig.daftarUntarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            /* Figma: 122x45 pill, ~14px side padding, flush to the bar's right inset. */
+            className="glass-rim hidden h-[45px] shrink-0 items-center whitespace-nowrap rounded-[52px] bg-gradient-to-r from-[rgba(0,53,125,0.61)] to-[rgba(0,96,227,0.61)] px-[14px] text-caption font-medium text-[#f5f5f5] shadow-[0px_4px_13.8px_0px_rgba(0,0,0,0.07)] backdrop-blur-sm transition-transform hover:scale-[1.03] sm:inline-flex"
+          >
+            Daftar Untar
+          </a>
           <button
             type="button"
             aria-label="Buka menu"
@@ -177,6 +196,17 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
+            {/* The pill CTA is hidden below sm, so surface it here instead. */}
+            <li className="sm:hidden">
+              <a
+                href={siteConfig.daftarUntarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-2xl px-4 py-3 text-sm font-medium opacity-80 hover:bg-white/10"
+              >
+                Daftar Untar
+              </a>
+            </li>
             <li className="mt-2 border-t border-white/15 pt-2">
               <p className="px-4 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">
                 Kontak Kami

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { units } from "@/lib/site";
 
@@ -99,8 +99,20 @@ export function UnitSelector() {
                 <p className="mt-5 line-clamp-2 px-5 text-body font-extrabold leading-[1.2] text-[#262626]">
                   {card.title}
                 </p>
+                {/* Figma 542:1075 — one pin + site line per location. */}
+                <div className="mt-2 flex flex-col gap-[2px] px-5">
+                  {card.locations.map((loc) => (
+                    <p
+                      key={loc}
+                      className="flex items-start gap-1 text-meta font-normal leading-[1.4] text-[#262626]"
+                    >
+                      <MapPin className="mt-[1px] h-3 w-3 shrink-0" />
+                      {loc}
+                    </p>
+                  ))}
+                </div>
                 <div className="mt-auto flex items-center justify-between px-5 pt-6 pb-1">
-                  <span className="text-[12px] font-semibold text-[#9f9f9f]">
+                  <span className="text-[12px] font-semibold text-[#015ddb]">
                     Pelajari lebih lanjut
                   </span>
                   <span className="glass-rim grid h-9 w-9 shrink-0 place-items-center rounded-[78px] bg-gradient-to-br from-[rgba(237,245,255,0.46)] to-white/0 shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)]">
