@@ -36,12 +36,20 @@ export function Hero() {
           tagline and Discover More against the glass. */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/10 via-black/5 to-black/30" />
 
-      {/* "Membangun Nilai," bar — normally sits BEHIND the central building peak
-          (z-10), so a little overlap looks intentional. Only once the viewport is
-          wide enough that the building has grown to cover the text (min-[2000px])
-          does it flip IN FRONT (z-30 > z-20). Tune the 2000px threshold to the
-          exact point where the building fully covers the text. */}
-      <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center sm:z-10 min-[2000px]:z-30">
+      {/* "Membangun Nilai," bar — sits BEHIND the building peak (z-10) only in the
+          band where the peak actually covers it, and IN FRONT (z-30 > the fg
+          image's z-20) outside it. The window is 1024-2000px:
+            < 1024   tablet/phone framing, where the peak no longer lines up with
+                     the bar at all, so it must read on its own -> in front
+            1024-2000 the peak covers the bar -> behind, the intended Figma look.
+                     Deliberately generous at the low end: staying covered through
+                     the first few zoom-in steps is fine.
+            >= 2000  text is capped at 73px / 720px while the building keeps
+                     growing, so it swallows the bar -> in front
+          Browser zoom changes the effective viewport width, which is why the
+          look flips as you zoom. Widen or narrow the band with these two numbers
+          if the crossover lands in the wrong place on your screen. */}
+      <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center lg:z-10 min-[2000px]:z-30">
         <motion.span
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
