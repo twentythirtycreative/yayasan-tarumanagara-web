@@ -16,7 +16,16 @@ import {
 import { useConfirm } from "../confirm";
 import { FieldError } from "@/components/form-error";
 import { GlassSelect } from "@/components/glass-select";
-import { MAX_IMAGE_SIZE, formatMB } from "@/lib/validators/upload";
+import {
+  ACCEPTED_IMAGE_TYPES,
+  MAX_IMAGE_SIZE,
+  formatMB,
+} from "@/lib/validators/upload";
+import {
+  PORTRAIT_MAX_EDGE,
+  downscaleImage,
+  shrinkStoredDataUrl,
+} from "@/lib/image-downscale";
 
 const field =
   "w-full rounded-xl border border-black/10 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-[#014aaf] focus:ring-2 focus:ring-[#014aaf]/20";
@@ -39,17 +48,23 @@ function validate(v: {
   return errors;
 }
 
-export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember }) {
+export function TataKelolaForm({
+  initial,
+  /** Preselected tab when adding, taken from the list's active tab. */
+  defaultRole = "Pembina",
+}: {
+  initial?: AdminGovernanceMember;
+  defaultRole?: GovernanceRole;
+}) {
   const router = useRouter();
   const { saveGovernanceMember, governance } = useAdmin();
   const confirm = useConfirm();
   const editing = Boolean(initial);
 
-  const [role, setRole] = useState<GovernanceRole>(initial?.role ?? "Pembina");
+  const [role, setRole] = useState<GovernanceRole>(initial?.role ?? defaultRole);
   const [name, setName] = useState(initial?.name ?? "");
   const [position, setPosition] = useState(initial?.position ?? "");
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? "");
-  const [photoX, setPhotoX] = useState(() => readPos(initial?.photoPosition, 0));
   const [photoY, setPhotoY] = useState(() => readPos(initial?.photoPosition, 1));
   const [published, setPublished] = useState(initial?.published ?? true);
   const [errors, setErrors] = useState<Errors>({});
@@ -76,7 +91,9 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
       name: name.trim(),
       position: position.trim(),
       photoUrl: photoUrl.trim(),
-      photoPosition: `${photoX}% ${photoY}%`,
+      // Horizontal is always centred: a portrait upload is narrower than the
+      // card is tall, so object-cover leaves no sideways slack to shift into.
+      photoPosition: `50% ${photoY}%`,
       // New members go to the end of their tab; moving them is the list's job.
       // Changing role on an existing member also sends them to the end of the
       // new tab, since its old index means nothing there.
@@ -87,16 +104,22 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
       published,
     };
     const ok = await confirm({
-      title: editing ? "Simpan perubahan?" : "Tambah pengurus?",
+      title: editing ? "Simpan perubahan?" : `Tambah ${role}?`,
       description: editing
-        ? "Perubahan pada data pengurus ini akan disimpan."
+        ? `Perubahan pada data ${role} ini akan disimpan.`
         : `Akan ditambahkan ke tab ${role} di halaman Tentang Kami.`,
       confirmText: editing ? "Simpan Perubahan" : "Simpan",
       variant: "primary",
       onConfirm: async () => {
         try {
           setSaving(true);
-          await saveGovernanceMember(item);
+          // Members saved before uploads were downscaled still carry an
+          // oversized data URL, which the form would send back verbatim and the
+          // Server Action would reject. Re-encode it on the way out.
+          await saveGovernanceMember({
+            ...item,
+            photoUrl: await shrinkStoredDataUrl(item.photoUrl, PORTRAIT_MAX_EDGE),
+          });
         } catch (error) {
           setSaving(false);
           toast.error(
@@ -107,7 +130,7 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
       },
     });
     if (!ok) return;
-    toast.success(editing ? "Perubahan disimpan" : "Pengurus ditambahkan");
+    toast.success(editing ? "Perubahan disimpan" : `${role} ditambahkan`);
     router.push("/admin/tata-kelola");
   };
 
@@ -120,7 +143,8 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
         <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.25} /> Kembali
       </Link>
       <h1 className="mt-4 text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">
-        {editing ? "Sunting Pengurus" : "Tambah Pengurus"}
+        {/* Follows the Kategori field, so switching it retitles the page too. */}
+        {editing ? `Sunting ${role}` : `Tambah ${role}`}
       </h1>
 
       <form
@@ -144,8 +168,8 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
                 fill
                 sizes="300px"
                 unoptimized
-                style={{ objectPosition: `${photoX}% ${photoY}%` }}
-                className="origin-top scale-[1.32] object-cover"
+                style={{ objectPosition: `50% ${photoY}%` }}
+                className="object-cover"
               />
             ) : (
               <div className="grid h-full place-items-center text-sm text-ink/40">
@@ -154,8 +178,8 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
             )}
           </div>
           <p className="text-xs text-ink/50">
-            Pratinjau sudah memakai perbesaran dan pemotongan yang sama dengan
-            kartu di halaman publik.
+            Pratinjau memakai pemotongan yang sama dengan kartu di halaman
+            publik.
           </p>
           <label className="glass-rim glass-btn mt-1 inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl text-sm font-semibold text-[#014aaf]">
             <Upload className="h-4 w-4" />
@@ -164,21 +188,27 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+                  toast.error("Foto harus JPG, PNG, atau WebP.");
+                  e.target.value = "";
+                  return;
+                }
                 if (file.size > MAX_IMAGE_SIZE) {
                   toast.error(`Ukuran foto maksimal ${formatMB(MAX_IMAGE_SIZE)}.`);
                   e.target.value = "";
                   return;
                 }
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const url = String(reader.result);
+                e.target.value = ""; // let the same file be re-picked after an error
+                try {
+                  const url = await downscaleImage(file, PORTRAIT_MAX_EDGE);
                   setPhotoUrl(url);
                   revalidate({ photoUrl: url });
-                };
-                reader.readAsDataURL(file);
+                } catch {
+                  toast.error("Gagal memproses foto. Coba file lain.");
+                }
               }}
             />
           </label>
@@ -187,29 +217,18 @@ export function TataKelolaForm({ initial }: { initial?: AdminGovernanceMember })
           </p>
           <FieldError message={errors.photoUrl} />
 
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-ink/60">Geser mendatar: {photoX}%</label>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={photoX}
-                onChange={(e) => setPhotoX(Number(e.target.value))}
-                className="accent-[#014aaf]"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-ink/60">Geser tegak: {photoY}%</label>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={photoY}
-                onChange={(e) => setPhotoY(Number(e.target.value))}
-                className="accent-[#014aaf]"
-              />
-            </div>
+          {/* Only the vertical axis has slack to crop into — see photoPosition
+              in submit() — so a horizontal slider would be a dead control. */}
+          <div className="mt-2 flex flex-col gap-1">
+            <label className="text-xs text-ink/60">Geser tegak: {photoY}%</label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={photoY}
+              onChange={(e) => setPhotoY(Number(e.target.value))}
+              className="accent-[#014aaf]"
+            />
           </div>
         </div>
 

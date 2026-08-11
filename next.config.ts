@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
+  experimental: {
+    serverActions: {
+      // Admin uploads travel to the Server Action as base64 data URLs, which the
+      // default 1 MB body cap rejects outright (the failure surfaces as an opaque
+      // redacted render error). Uploads are downscaled client-side well below
+      // this, so the headroom is only for photos stored before that existed.
+      // Stays under Vercel's hard 4.5 MB request-body limit.
+      bodySizeLimit: "4mb",
+    },
+  },
 };
 
 export default nextConfig;

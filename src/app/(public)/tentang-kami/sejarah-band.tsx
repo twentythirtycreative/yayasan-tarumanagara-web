@@ -354,9 +354,17 @@ export function SejarahBand() {
       {/* Pulled back up over the sticky band by its full height, so the cards
           sit on the photo exactly as they did when the band was an overlay.
           pb is Figma's 90px gap between the bottom of an open card and Visi
-          (16:3294); collapsed it does nothing, because the cards are well short
-          of the band and the section's min-height sets the height. */}
-      <div className="site-container relative mt-[calc(var(--band)*-1)] pt-[clamp(48px,9.9vw,142px)] pb-20 sm:pb-28 md:pb-[90px]">
+          (16:3294), so it is only there while a card is open. Collapsed it was
+          not free after all: the two cards plus the top padding already run
+          past one screen at common viewport heights, so the section grew past
+          the band and the padding showed up as a blank white strip under the
+          photo. Without it the section falls back to its min-height and the
+          photo meets Visi. */}
+      <div
+        className={`site-container relative mt-[calc(var(--band)*-1)] pt-[clamp(48px,9.9vw,142px)] ${
+          open !== null ? "pb-20 sm:pb-28 md:pb-[90px]" : ""
+        }`}
+      >
         {/* Figma puts the cards at x=624..1351 of 1440 — a 727px column hugging
             the right. Below md they take the full width instead of sitting in a
             column too narrow to hold an 80px heading. */}

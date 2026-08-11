@@ -15,6 +15,11 @@ import {
   MAX_IMAGE_SIZE,
   formatMB,
 } from "@/lib/validators/upload";
+import {
+  COVER_MAX_EDGE,
+  downscaleImage,
+  shrinkStoredDataUrl,
+} from "@/lib/image-downscale";
 import { formatDateId } from "@/lib/format-date";
 
 const field =
@@ -203,7 +208,12 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
     };
     try {
       setSaving(true);
-      await saveNews(item);
+      // Articles saved before uploads were downscaled still carry an oversized
+      // cover data URL, which the Server Action's body limit would reject.
+      await saveNews({
+        ...item,
+        coverImageUrl: await shrinkStoredDataUrl(item.coverImageUrl, COVER_MAX_EDGE),
+      });
       toast.success(published ? "Berita dipublikasikan" : "Disimpan sebagai draft");
       router.push("/admin/berita");
     } catch (err) {
@@ -346,7 +356,7 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
@@ -359,14 +369,15 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
                     e.target.value = "";
                     return;
                   }
-                  setCoverName(file.name);
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const url = reader.result as string;
+                  e.target.value = ""; // let the same file be re-picked after an error
+                  try {
+                    const url = await downscaleImage(file, COVER_MAX_EDGE);
+                    setCoverName(file.name);
                     setCoverImageUrl(url);
                     revalidate({ coverImageUrl: url });
-                  };
-                  reader.readAsDataURL(file);
+                  } catch {
+                    toast.error("Gagal memproses gambar. Coba file lain.");
+                  }
                 }}
               />
             </label>

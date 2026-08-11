@@ -65,12 +65,12 @@ export default function AdminTataKelolaList() {
           </p>
         </div>
         <Link
-          href="/admin/tata-kelola/baru"
-          aria-label="Tambah Pengurus"
+          href={`/admin/tata-kelola/baru?kategori=${encodeURIComponent(tab)}`}
+          aria-label={`Tambah ${tab}`}
           className="glass-rim inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
         >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Tambah Pengurus</span>
+          <span className="hidden sm:inline">Tambah {tab}</span>
         </Link>
       </div>
 
@@ -130,7 +130,7 @@ export default function AdminTataKelolaList() {
                   sizes="82px"
                   unoptimized
                   style={{ objectPosition: m.photoPosition }}
-                  className="origin-top scale-[1.32] object-cover"
+                  className="object-cover"
                 />
               ) : (
                 <div className="grid h-full place-items-center text-[10px] text-ink/40">
@@ -235,7 +235,7 @@ export default function AdminTataKelolaList() {
                     title="Hapus"
                     onClick={async () => {
                       const ok = await confirm({
-                        title: "Hapus pengurus?",
+                        title: `Hapus ${m.role}?`,
                         description: `"${m.name}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`,
                         confirmText: "Hapus",
                         variant: "danger",
@@ -249,7 +249,7 @@ export default function AdminTataKelolaList() {
                         },
                       });
                       if (!ok) return;
-                      toast.success("Pengurus dihapus");
+                      toast.success(`${m.role} dihapus`);
                     }}
                     className="glass-rim glass-btn grid h-8 w-8 place-items-center rounded-lg text-ink/60 hover:text-[#dc2626]"
                   >

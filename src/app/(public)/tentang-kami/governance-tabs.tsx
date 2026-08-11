@@ -217,12 +217,14 @@ function PersonCard({
           draggable={false}
           style={{ objectPosition: person.pos }}
           className={cn(
-            "origin-top scale-[1.32] object-cover transition-[filter] duration-[1600ms] ease-out",
+            // No zoom: uploads are portrait headshots already framed for this
+            // card, so object-cover + the stored objectPosition is the whole crop.
+            "object-cover transition-[filter] duration-[1600ms] ease-out",
             selected ? "grayscale-0" : "grayscale",
           )}
         />
         {/* Glass name/role box (Figma 376:999) — glass surface + white rim */}
-        <div className="glass-rim absolute inset-x-0 bottom-0 flex h-[118px] flex-col justify-center rounded-b-[16px] border-t border-white/40 bg-[rgba(255,255,255,0.45)] px-[22px] backdrop-blur-[18px] backdrop-saturate-150">
+        <div className="glass-rim absolute inset-x-0 bottom-0 flex h-[104px] flex-col justify-center rounded-b-[16px] border-t border-white/40 bg-[rgba(255,255,255,0.45)] px-[22px] backdrop-blur-[18px] backdrop-saturate-150">
           <p className="text-[18px] leading-[22px] font-extrabold text-[#262626]">
             {person.name}
           </p>
