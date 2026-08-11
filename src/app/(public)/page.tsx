@@ -65,12 +65,23 @@ export default async function HomePage() {
               {/* Chairman — large white circle, sits BEHIND the card (z-0) */}
               <div className="z-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2">
                 <div className="relative aspect-square w-[240px] overflow-hidden rounded-full bg-white sm:w-[320px] lg:w-[440px]">
+                  {/* Figma 1:944 places this 788x1028 portrait at exactly
+                      103.74% x 135.33% of the circle, offset -4.36% / -1.23% —
+                      i.e. a hair wider than cover and pulled up so the crop sits
+                      near the top of the frame. Those four numbers are copied
+                      straight from Figma rather than approximated with
+                      object-position, so the framing is 1:1 at every breakpoint
+                      (they're percentages of the circle, which is 240/320/440).
+                      No `fill` here: fill sets width/height inline and would
+                      fight these classes. The 103.74/135.33 ratio is the photo's
+                      own 788/1028, so nothing is squashed. */}
                   <Image
-                    src="/images/chairman.jpg"
-                    alt="Ketua Yayasan Tarumanagara"
-                    fill
-                    sizes="440px"
-                    className="object-cover"
+                    src="/images/chairman-ariawan.jpg"
+                    alt="Prof. Dr. Ariawan Gunadi, S.H., M.H. — Ketua Yayasan Tarumanagara"
+                    width={788}
+                    height={1028}
+                    sizes="(min-width: 1024px) 457px, (min-width: 640px) 332px, 249px"
+                    className="absolute left-[-4.36%] top-[-1.23%] h-[135.33%] w-[103.74%] max-w-none object-cover"
                   />
                 </div>
               </div>

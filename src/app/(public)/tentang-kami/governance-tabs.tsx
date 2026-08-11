@@ -4,38 +4,28 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GOVERNANCE_ROLES, type GovernanceRole } from "@/lib/governance-roles";
 
-type Person = { name: string; role: string; photo: string; pos: string };
+type Person = { id: string; name: string; role: string; photo: string; pos: string };
 
-// Figma 376:993 — two colour portraits (man / woman) alternate down the row.
-// `pos` mirrors each card's Figma crop (mask-position), keeping the framing.
-const NAME = "Dr. Ir. Steven Darmawan, S.T., M.T";
-const ROLE = "Kepala Lembaga Pembelajaran dan Inovasi Akademik";
-const PORTRAITS = [
-  { photo: "/images/person-3.jpg", pos: "50% 14%" }, // man
-  { photo: "/images/person-woman.jpg", pos: "50% 16%" }, // woman (Figma 364:4419)
-];
+const TABS = GOVERNANCE_ROLES;
 
-const makePeople = (): Person[] =>
-  Array.from({ length: 8 }).map((_, i) => ({
-    name: NAME,
-    role: ROLE,
-    ...PORTRAITS[i % PORTRAITS.length],
-  }));
-
-const PEOPLE: Record<string, Person[]> = {
-  Pembina: makePeople(),
-  Pengurus: makePeople(),
-  Pengawas: makePeople(),
-};
-
-const TABS = ["Pembina", "Pengurus", "Pengawas"] as const;
-
-export function GovernanceTabs() {
-  const [active, setActive] = useState<(typeof TABS)[number]>("Pembina");
-  const count = PEOPLE[active].length;
+/**
+ * `people` comes from the DB (see lib/data/governance.ts) already grouped by tab
+ * and in display order, so this component only handles presentation.
+ */
+export function GovernanceTabs({
+  people,
+}: {
+  people: Record<GovernanceRole, Person[]>;
+}) {
+  const [active, setActive] = useState<GovernanceRole>("Pembina");
+  const current = people[active];
+  const count = current.length;
   // The centred card is "selected" — coloured + raised. Arrows move it.
-  const [selected, setSelected] = useState(Math.floor(8 / 2));
+  const [selected, setSelected] = useState(() =>
+    Math.floor(people.Pembina.length / 2),
+  );
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -89,7 +79,9 @@ export function GovernanceTabs() {
                   type="button"
                   onClick={() => {
                     setActive(tab);
-                    setSelected(Math.floor(count / 2));
+                    // Centre on the NEW tab's middle card — `count` still holds
+                    // the outgoing tab's length at this point.
+                    setSelected(Math.floor(people[tab].length / 2));
                   }}
                   className={cn(
                     "glass-rim h-[46px] cursor-pointer rounded-[43px] px-8 text-headline shadow-[0px_4px_13.8px_rgba(0,0,0,0.07)] backdrop-blur-sm transition",
@@ -109,8 +101,18 @@ export function GovernanceTabs() {
         </p>
       </div>
 
+      {/* A tab with nobody published in it yet — the carousel and its arrows
+          would otherwise render an empty rail with a live "next" arrow. */}
+      {count === 0 && (
+        <div className="site-container mt-10">
+          <p className="rounded-[16px] border border-black/5 bg-white/60 px-6 py-12 text-center text-body font-medium text-[#262626]/50">
+            Belum ada data {active}.
+          </p>
+        </div>
+      )}
+
       {/* Transform-based carousel (arrow navigation only) */}
-      <div className="relative mt-10">
+      <div className={cn("relative mt-10", count === 0 && "hidden")}>
         <div className="site-container">
           <div
             ref={viewportRef}
@@ -125,9 +127,9 @@ export function GovernanceTabs() {
                   "transition-transform duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
               )}
             >
-              {PEOPLE[active].map((p, i) => (
+              {current.map((p, i) => (
                 <PersonCard
-                  key={i}
+                  key={p.id}
                   person={p}
                   selected={i === selected}
                   onSelect={() => setSelected(i)}
@@ -209,6 +211,9 @@ function PersonCard({
           fill
           sizes="316px"
           priority={priority}
+          // Admin uploads land in the DB as base64 data URLs; the image
+          // optimiser can't fetch those, so they have to bypass it.
+          unoptimized={person.photo.startsWith("data:")}
           draggable={false}
           style={{ objectPosition: person.pos }}
           className={cn(

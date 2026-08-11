@@ -2,10 +2,21 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as api from "./actions";
-import type { AdminJob, AdminNews, Application } from "./types";
+import type {
+  AdminGovernanceMember,
+  AdminJob,
+  AdminNews,
+  Application,
+} from "./types";
 
-export type { AdminJob, AdminNews, Application } from "./types";
-export { NEWS_TAGS, slugify, shortId } from "./types";
+export type {
+  AdminGovernanceMember,
+  AdminJob,
+  AdminNews,
+  Application,
+  GovernanceRole,
+} from "./types";
+export { NEWS_TAGS, GOVERNANCE_ROLES, slugify, shortId } from "./types";
 
 type Store = {
   news: AdminNews[];
@@ -22,6 +33,12 @@ type Store = {
   toggleJobOpen: (id: string) => Promise<void>;
   getJob: (id: string) => AdminJob | undefined;
   deleteApplication: (id: string) => Promise<void>;
+  governance: AdminGovernanceMember[];
+  saveGovernanceMember: (m: AdminGovernanceMember) => Promise<void>;
+  deleteGovernanceMember: (id: string) => Promise<void>;
+  toggleGovernancePublished: (id: string) => Promise<void>;
+  moveGovernanceMember: (id: string, direction: -1 | 1) => Promise<void>;
+  getGovernanceMember: (id: string) => AdminGovernanceMember | undefined;
 };
 
 const AdminCtx = createContext<Store | null>(null);
@@ -30,6 +47,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
   const [news, setNews] = useState<AdminNews[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
+  const [governance, setGovernance] = useState<AdminGovernanceMember[]>([]);
   const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -37,16 +55,18 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     let active = true;
     (async () => {
       try {
-        const [n, j, a, me] = await Promise.all([
+        const [n, j, a, g, me] = await Promise.all([
           api.listNews(),
           api.listJobs(),
           api.listApplications(),
+          api.listGovernanceMembers(),
           api.getCurrentAdmin(),
         ]);
         if (!active) return;
         setNews(n);
         setJobs(j);
         setApplications(a);
+        setGovernance(g);
         setAdminEmail(me.email);
       } catch (err) {
         console.error("Gagal memuat data admin (cek koneksi Turso):", err);
@@ -114,6 +134,44 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       await api.deleteApplication(id);
       setApplications((prev) => prev.filter((x) => x.id !== id));
     },
+    governance,
+    saveGovernanceMember: async (m) => {
+      const res = await api.saveGovernanceMember(m);
+      if (res?.error) throw new Error(res.error);
+      setGovernance((prev) =>
+        prev.some((x) => x.id === m.id)
+          ? prev.map((x) => (x.id === m.id ? m : x))
+          : [...prev, m],
+      );
+    },
+    deleteGovernanceMember: async (id) => {
+      await api.deleteGovernanceMember(id);
+      setGovernance((prev) => prev.filter((x) => x.id !== id));
+    },
+    toggleGovernancePublished: async (id) => {
+      const res = await api.toggleGovernancePublished(id);
+      setGovernance((prev) =>
+        res === null
+          ? prev.filter((x) => x.id !== id)
+          : prev.map((x) => (x.id === id ? { ...x, published: res.published } : x)),
+      );
+    },
+    moveGovernanceMember: async (id, direction) => {
+      const order = await api.moveGovernanceMember(id, direction);
+      if (order === null) {
+        setGovernance((prev) => prev.filter((x) => x.id !== id));
+        return;
+      }
+      // The action renumbers the whole role densely, so mirror that here rather
+      // than swapping two rows — otherwise the local sortOrder drifts from the DB.
+      const rank = new Map(order.map((memberId, i) => [memberId, i]));
+      setGovernance((prev) =>
+        prev.map((x) =>
+          rank.has(x.id) ? { ...x, sortOrder: rank.get(x.id)! } : x,
+        ),
+      );
+    },
+    getGovernanceMember: (id) => governance.find((x) => x.id === id),
   };
 
   return <AdminCtx.Provider value={store}>{children}</AdminCtx.Provider>;

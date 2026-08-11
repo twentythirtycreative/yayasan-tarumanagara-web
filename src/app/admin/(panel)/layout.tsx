@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Newspaper,
   Briefcase,
+  Users,
   FileText,
   LogOut,
   Home,
@@ -22,6 +23,7 @@ import { logout } from "../auth-actions";
 const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/berita", label: "Berita & Kegiatan", icon: Newspaper },
+  { href: "/admin/tata-kelola", label: "Tata Kelola", icon: Users },
   { href: "/admin/lowongan", label: "Lowongan Kerja", icon: Briefcase },
   { href: "/admin/lamaran", label: "Lamaran (CV)", icon: FileText },
 ];

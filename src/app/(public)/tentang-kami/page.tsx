@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { SectionHero } from "@/components/sections/section-hero";
 import { Reveal } from "@/components/motion/reveal";
 import { GovernanceTabs } from "./governance-tabs";
+import { getGovernanceMembers } from "@/lib/data/governance";
+import { SejarahBand } from "./sejarah-band";
 
 export const metadata: Metadata = {
   title: "Tentang Kami",
@@ -12,14 +14,9 @@ export const metadata: Metadata = {
 
 const heading = "text-header font-extrabold";
 
-// Figma 376:989 (left) / 376:988 (middle, raised + shadow) / 376:987 (right)
-const sejarahPhotos = [
-  "/images/sejarah-1.jpg",
-  "/images/sejarah-2.jpg",
-  "/images/sejarah-3.jpg",
-];
+export default async function TentangKamiPage() {
+  const governance = await getGovernanceMembers();
 
-export default function TentangKamiPage() {
   return (
     <>
       <SectionHero
@@ -31,49 +28,8 @@ export default function TentangKamiPage() {
         imageClassName="object-cover object-[center_55%] grayscale brightness-[0.68] contrast-[1.3]"
       />
 
-      {/* Kilas Sejarah */}
-      <section className="bg-surface py-20 sm:py-28">
-        <div className="site-container">
-          <Reveal>
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-[40px]">
-              <h2 className={`${heading} text-[#dadada] md:w-[470px] md:shrink-0`}>
-                Kilas <span className="text-[#262626]">Sejarah</span> Tarumanagara
-              </h2>
-              <p className="pt-2 text-body font-medium text-[#262626] md:max-w-[560px]">
-                Yayasan Tarumanagara didirikan pada 18 Juni 1959 dengan semangat
-                memajukan pendidikan dan kesehatan di Indonesia. Terinspirasi dari
-                kejayaan Kerajaan Tarumanagara, yayasan ini memulai perjalanannya
-                melalui pendirian Universitas Tarumanagara dan terus berkembang
-                menjadi ekosistem pendidikan, kesehatan, serta inovasi yang
-                memberikan dampak positif bagi masyarakat luas.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="mt-16 grid grid-cols-1 gap-8 sm:mt-[112px] sm:grid-cols-3">
-            {sejarahPhotos.map((src, i) => (
-              <Reveal key={src} delay={i * 0.1}>
-                <div
-                  className={`relative aspect-[379/396] w-full overflow-hidden rounded-[34px] ${
-                    i === 1
-                      ? "shadow-[46px_36px_59px_rgba(0,0,0,0.25)] sm:-translate-y-10"
-                      : ""
-                  }`}
-                >
-                  <Image
-                    src={src}
-                    alt=""
-                    fill
-                    sizes="379px"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/20" />
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Sejarah — photo band with the two expandable story cards */}
+      <SejarahBand />
 
       {/* Visi — dark band. Figma 376:975 has it at 1440x359; trimmed a little
           under that by preference. Height is pinned rather than left to grow out
@@ -104,9 +60,10 @@ export default function TentangKamiPage() {
               376:978 y=1776) — offset down by exactly one heading line-height.
               Width trimmed so the heading stays two lines in the inset column. */}
           <p className="max-w-[440px] text-body font-medium text-[#f5f5f5] md:mt-[clamp(2.5rem,6vw,80px)]">
-            Menjadi lembaga yang berkontribusi signifikan bagi masyarakat melalui
-            penyelenggaraan pendidikan dan kesehatan yang berkualitas, inklusif,
-            dan berkelanjutan.
+            {/* Figma 1:1949 */}
+            Menjadi Yayasan terkemuka dalam peran serta mencerdaskan dan
+            menyejahterakan bangsa berlandaskan budi luhur; mandiri; ilmu dan
+            keahlian; serta etika profesi.
           </p>
           </div>
         </div>
@@ -140,21 +97,23 @@ export default function TentangKamiPage() {
                 <span className="text-[#dadada]">Perubahan</span>
               </h2>
               <ol className="mt-8 list-decimal space-y-5 pl-6 text-body font-medium text-[#262626]">
+                {/* Figma 1:1954 — three points, replacing the previous four.
+                    Figma spells the last value "Enterpreunership"; corrected to
+                    Entrepreneurship, which is how it reads on the beranda hero
+                    and in the Sejarah Tarumanagara card. */}
                 <li>
-                  Menyelenggarakan pendidikan yang berkualitas &amp; terjangkau
-                  bagi masyarakat luas.
+                  Memfasilitasi aspirasi masyarakat dari semua lapisan dalam
+                  bidang pendidikan dan kesehatan yang berkualitas, berbiaya
+                  terjangkau, dan inovatif.
                 </li>
                 <li>
-                  Menyelenggarakan layanan kesehatan yang berkualitas &amp;
-                  berorientasi pada kemaslahatan masyarakat.
+                  Membangun &ldquo;Kebangsaan dan Keunggulan&rdquo; bersama
+                  pemangku kepentingan yang bersinergi, dengan nilai-nilai
+                  Integritas; Profesional; dan Entrepreneurship.
                 </li>
                 <li>
-                  Mengembangkan sumber daya manusia yang berintegritas,
-                  profesional &amp; berjiwa entrepreneurship.
-                </li>
-                <li>
-                  Memberikan kontribusi nyata bagi kesejahteraan masyarakat
-                  melalui inovasi, kolaborasi &amp; pengembangan berkelanjutan.
+                  Memberdayakan sumber daya internal secara berkesinambungan
+                  dalam mencerdaskan dan menyejahterakan bangsa.
                 </li>
               </ol>
             </div>
@@ -169,7 +128,7 @@ export default function TentangKamiPage() {
         <div className="mx-auto w-full max-w-[1440px] px-6 sm:px-[46px]">
           <div className="relative pb-10 pt-10 sm:pb-14 sm:pt-14">
             <div className="pointer-events-none absolute inset-0 rounded-[27px] bg-white shadow-[0px_4px_45px_rgba(0,0,0,0.06)]" />
-            <GovernanceTabs />
+            <GovernanceTabs people={governance} />
           </div>
         </div>
       </section>

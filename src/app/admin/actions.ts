@@ -1,13 +1,18 @@
 "use server";
 
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { revalidatePath, unstable_cache, updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
 import { requireAdmin } from "@/lib/auth/guard";
 import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
-import type { AdminJob, AdminNews, Application } from "./types";
+import type {
+  AdminGovernanceMember,
+  AdminJob,
+  AdminNews,
+  Application,
+} from "./types";
 
 // Invalidate the Data Cache + affected public routes after a write.
 function revalidateNews() {
@@ -22,6 +27,10 @@ function revalidateJobs() {
   updateTag(CACHE_TAGS.jobs);
   revalidatePath("/karir");
   revalidatePath("/karir/kirim-cv");
+}
+function revalidateGovernance() {
+  updateTag(CACHE_TAGS.governance);
+  revalidatePath("/tentang-kami");
 }
 
 // ── Mappers ───────────────────────────────────────────────────────────────
@@ -206,6 +215,144 @@ export async function toggleJobOpen(id: string): Promise<{ isOpen: boolean } | n
     .where(eq(schema.jobs.id, id));
   revalidateJobs();
   return { isOpen: next };
+}
+
+// ── Tata Kelola Organisasi ────────────────────────────────────────────────
+type GovernanceRow = typeof schema.governanceMembers.$inferSelect;
+
+const toAdminGovernance = (r: GovernanceRow): AdminGovernanceMember => ({
+  id: r.id,
+  role: r.role,
+  name: r.name,
+  position: r.position,
+  photoUrl: r.photoUrl ?? "",
+  photoPosition: r.photoPosition,
+  sortOrder: r.sortOrder,
+  published: r.published,
+});
+
+const cachedGovernance = unstable_cache(
+  async (): Promise<AdminGovernanceMember[]> => {
+    const rows = await db
+      .select()
+      .from(schema.governanceMembers)
+      .orderBy(asc(schema.governanceMembers.sortOrder), asc(schema.governanceMembers.name));
+    return rows.map(toAdminGovernance);
+  },
+  ["admin-governance"],
+  { tags: [CACHE_TAGS.governance], revalidate: 3600 },
+);
+
+export async function listGovernanceMembers(): Promise<AdminGovernanceMember[]> {
+  await requireAdmin();
+  return cachedGovernance();
+}
+
+export async function saveGovernanceMember(
+  item: AdminGovernanceMember,
+): Promise<{ error?: string }> {
+  await requireAdmin();
+  if (
+    item.photoUrl.startsWith("data:") &&
+    dataUrlBytes(item.photoUrl) > MAX_IMAGE_SIZE
+  ) {
+    return { error: "Ukuran foto melebihi batas." };
+  }
+  const values = {
+    id: item.id,
+    role: item.role,
+    name: item.name,
+    position: item.position,
+    photoUrl: item.photoUrl || null,
+    photoPosition: item.photoPosition || "50% 50%",
+    sortOrder: item.sortOrder,
+    published: item.published,
+  };
+  await db
+    .insert(schema.governanceMembers)
+    .values(values)
+    .onConflictDoUpdate({
+      target: schema.governanceMembers.id,
+      set: {
+        role: values.role,
+        name: values.name,
+        position: values.position,
+        photoUrl: values.photoUrl,
+        photoPosition: values.photoPosition,
+        sortOrder: values.sortOrder,
+        published: values.published,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  revalidateGovernance();
+  return {};
+}
+
+export async function deleteGovernanceMember(id: string): Promise<void> {
+  await requireAdmin();
+  await db.delete(schema.governanceMembers).where(eq(schema.governanceMembers.id, id));
+  revalidateGovernance();
+}
+
+export async function toggleGovernancePublished(
+  id: string,
+): Promise<{ published: boolean } | null> {
+  await requireAdmin();
+  const [row] = await db
+    .select({ published: schema.governanceMembers.published })
+    .from(schema.governanceMembers)
+    .where(eq(schema.governanceMembers.id, id));
+  if (!row) return null;
+  const next = !row.published;
+  await db
+    .update(schema.governanceMembers)
+    .set({ published: next, updatedAt: new Date().toISOString() })
+    .where(eq(schema.governanceMembers.id, id));
+  revalidateGovernance();
+  return { published: next };
+}
+
+/**
+ * Move a member one place left/right within its own role, and return that role's
+ * ids in the new order so the client can reconcile.
+ *
+ * Rewrites every sortOrder in the role as a dense 0..n-1 sequence rather than
+ * swapping two values: rows created before any ordering was set all share the
+ * default 0, and swapping equal numbers moves nothing.
+ */
+export async function moveGovernanceMember(
+  id: string,
+  direction: -1 | 1,
+): Promise<string[] | null> {
+  await requireAdmin();
+  const [target] = await db
+    .select({ role: schema.governanceMembers.role })
+    .from(schema.governanceMembers)
+    .where(eq(schema.governanceMembers.id, id));
+  if (!target) return null;
+
+  const siblings = await db
+    .select({ id: schema.governanceMembers.id })
+    .from(schema.governanceMembers)
+    .where(eq(schema.governanceMembers.role, target.role))
+    .orderBy(asc(schema.governanceMembers.sortOrder), asc(schema.governanceMembers.name));
+
+  const order = siblings.map((s) => s.id);
+  const from = order.indexOf(id);
+  const to = from + direction;
+  if (from < 0 || to < 0 || to >= order.length) return order; // already at the end
+  [order[from], order[to]] = [order[to], order[from]];
+
+  await Promise.all(
+    order.map((memberId, i) =>
+      db
+        .update(schema.governanceMembers)
+        .set({ sortOrder: i, updatedAt: new Date().toISOString() })
+        .where(eq(schema.governanceMembers.id, memberId)),
+    ),
+  );
+  revalidateGovernance();
+  return order;
 }
 
 // ── Lamaran ───────────────────────────────────────────────────────────────

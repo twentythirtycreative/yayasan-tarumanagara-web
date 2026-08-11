@@ -1,6 +1,11 @@
 // Shared admin DTO types + helpers (no "use client" so server actions can
 // import them too).
 
+import type { GovernanceRole } from "@/lib/governance-roles";
+
+export { GOVERNANCE_ROLES } from "@/lib/governance-roles";
+export type { GovernanceRole } from "@/lib/governance-roles";
+
 export type AdminNews = {
   id: string;
   title: string;
@@ -22,6 +27,17 @@ export type AdminJob = {
   type: string; // e.g. "Full-Time"
   location: string; // e.g. "Work From Office"
   isOpen: boolean;
+};
+
+export type AdminGovernanceMember = {
+  id: string;
+  role: GovernanceRole; // which tab: Pembina / Pengurus / Pengawas
+  name: string;
+  position: string; // jabatan
+  photoUrl: string;
+  photoPosition: string; // CSS object-position, e.g. "50% 14%"
+  sortOrder: number; // ascending = left to right within the role
+  published: boolean;
 };
 
 export type Application = {

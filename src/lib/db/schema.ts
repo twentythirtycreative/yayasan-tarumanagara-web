@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
-import { blob, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { blob, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { GOVERNANCE_ROLES } from "@/lib/governance-roles";
 
 const uuid = () => crypto.randomUUID();
 
@@ -56,6 +57,41 @@ export const applications = sqliteTable("applications", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Tata Kelola Organisasi — the people carousel on Tentang Kami. One row per
+ * person; `role` picks the tab they appear under and `sortOrder` their place in
+ * that tab's row, left to right. Admin CRUD writes here.
+ */
+export const governanceMembers = sqliteTable(
+  "governance_members",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    role: text("role", { enum: GOVERNANCE_ROLES }).notNull(),
+    name: text("name").notNull(),
+    /** Jabatan, shown in smaller type under the name on the card. */
+    position: text("position").notNull().default(""),
+    photoUrl: text("photo_url"),
+    /**
+     * CSS object-position for the portrait, e.g. "50% 14%". Every headshot is
+     * framed differently, and the card crops hard, so the crop has to travel
+     * with the photo rather than be one constant in the component.
+     */
+    photoPosition: text("photo_position").notNull().default("50% 50%"),
+    /** Ascending, left to right within the role. Ties fall back to name. */
+    sortOrder: integer("sort_order").notNull().default(0),
+    /** Lets admin stage someone without showing them on the public page. */
+    published: integer("published", { mode: "boolean" }).notNull().default(true),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  // Array, not an object: drizzle-orm 0.45 ignores the legacy object form here
+  // without warning, and the index silently never reaches the database.
+  (t) => [
+    /** The public page always reads one whole tab in display order. */
+    index("governance_members_role_order_idx").on(t.role, t.sortOrder),
+  ],
+);
+
 /** Admin users (Turso-backed auth). Password stored as scrypt "salt:hash". */
 export const adminUsers = sqliteTable("admin_users", {
   id: text("id").primaryKey().$defaultFn(uuid),
@@ -82,3 +118,5 @@ export type NewNews = typeof news.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
+export type GovernanceMember = typeof governanceMembers.$inferSelect;
+export type NewGovernanceMember = typeof governanceMembers.$inferInsert;

@@ -7,21 +7,24 @@ import { motion } from "motion/react";
 // Smooth entrance easing (easeOutExpo-ish) — plays once on load.
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
-// Building framing — matches the Figma hero background exactly:
-//   background: url(...) -15.681px -49.574px / 122.763% 139.248% no-repeat
-// i.e. ~1.228× zoom over cover, centre shifted +10.3% right / +13.7% down.
-// Full colour (node 543:1683) — the blue sky/glass stays saturated, but the
-// whole frame is darkened hard. Sampling the Figma render against the source
-// photo puts its sky at ~0.50x source, near-uniform top to bottom; 0.58 here
-// plus the overlay below composites to that.
-//
-// The photo (2400x1596, aspect 1.50) is narrower than the hero box, so
-// object-cover fits it by width and leaves NO horizontal slack — object-position
-// X is inert here. `scale` is what creates the slack (half the excess per side)
-// and `translate-x` spends it. Keep scale >= 2 * translate + 1 or the right edge
-// pulls away from the photo and the section background shows through.
+// Building framing (Figma node 1:952). The hero photo is now the real Untar
+// tower, and Figma shows it whole — no zoom, no pan, the frame is the photo.
+// Figma stretches it to 1440x844; we object-cover instead so it stays undistorted
+// at arbitrary viewport aspects. The photo (1332x882, aspect 1.51) is wider than
+// tall, so a 100svh hero crops it vertically: 45% biases the visible window
+// slightly toward the top, which keeps the roofline and antenna clear above the
+// "Membangun Nilai," bar and spends the crop on the empty forecourt instead.
+// Grade: brightness 0.46, deliberately a step lighter than Figma. The fitted
+// value was 0.38, measured against the Figma render sampled at the source
+// photo's own pixels — with contrast 1.25 it reproduced Figma's greys within a
+// couple of levels (sky 171 -> 49, 210 -> 68, facade 141 -> 35). That reads
+// heavier on a real screen than it does in the Figma canvas, so the brightness
+// is the one value off the fit; contrast and saturate still carry the rest of
+// the look, the latter because Figma keeps more blue in the shadows than a
+// plain brightness cut does. Adjust here rather than in the two overlays
+// below — this is the only knob that moves the whole image evenly.
 const imgClass =
-  "object-cover object-[50%_0%] brightness-[0.58] contrast-[1.05] scale-[1.22] translate-x-[10%]";
+  "object-cover object-[50%_45%] brightness-[0.46] contrast-[1.25] saturate-[1.3]";
 
 export function Hero() {
   return (
@@ -29,27 +32,23 @@ export function Hero() {
     // edge, which lands it over the bottom of this photo and washes it pale.
     // Figma has no such haze on the hero, so the hero paints above it.
     <section className="relative isolate z-10 flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-[#0a0e13] [@media(max-height:800px)]:pt-[64px]">
-      {/* Background skyscraper photo, full colour and darkened as in Figma */}
-      <Image src="/images/hero-building.jpg" alt="Gedung Tarumanagara" fill priority sizes="100vw" className={`z-0 ${imgClass}`} />
-      {/* Figma darkens near-uniformly, so this is now a light grade rather than
-          the heavy bottom vignette it used to be — just enough to seat the
-          tagline and Discover More against the glass. */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/10 via-black/5 to-black/30" />
+      {/* Background photo of the Untar tower, full colour and darkened as in Figma */}
+      <Image src="/images/hero-untar.jpg" alt="Gedung Universitas Tarumanagara" fill priority sizes="100vw" className={`z-0 ${imgClass}`} />
+      {/* Figma's shadows keep more blue than any brightness/contrast/saturate
+          combination can hold on to — after the filter above the sky lands on
+          rgb(50,59,69) where Figma has rgb(49,66,85). Screening this near-black
+          navy over it lifts only the green and blue channels and puts it there. */}
+      <div className="absolute inset-0 z-0 bg-[#000a19] mix-blend-screen" />
+      {/* The filter above already carries nearly all of Figma's darkening, and
+          Figma's own bottom band is if anything lighter than its middle, so this
+          is only a whisper of a vignette to seat the tagline and Discover More. */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
 
-      {/* "Membangun Nilai," bar — sits BEHIND the building peak (z-10) only in the
-          band where the peak actually covers it, and IN FRONT (z-30 > the fg
-          image's z-20) outside it. The window is 1024-2000px:
-            < 1024   tablet/phone framing, where the peak no longer lines up with
-                     the bar at all, so it must read on its own -> in front
-            1024-2000 the peak covers the bar -> behind, the intended Figma look.
-                     Deliberately generous at the low end: staying covered through
-                     the first few zoom-in steps is fine.
-            >= 2000  text is capped at 73px / 720px while the building keeps
-                     growing, so it swallows the bar -> in front
-          Browser zoom changes the effective viewport width, which is why the
-          look flips as you zoom. Widen or narrow the band with these two numbers
-          if the crossover lands in the wrong place on your screen. */}
-      <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center lg:z-10 min-[2000px]:z-30">
+      {/* "Membangun Nilai," bar. The old design had a second, cropped copy of the
+          photo layered on top so the building's peak cut across this bar; the new
+          Figma frames the tower head-on with nothing in front of it, so the bar
+          simply sits above the photo and the whole z-index dance is gone. */}
+      <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center">
         <motion.span
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -59,19 +58,6 @@ export function Hero() {
           Membangun Nilai,
         </motion.span>
       </div>
-
-      {/* Foreground building (cropped PNG, transparent sky) — same framing as
-          the grey background, but layered IN FRONT of the bar (z-20) so its
-          peaks overlap "Membangun Nilai,". The grey backdrop shows through the
-          transparent sky. */}
-      <Image
-        src="/images/hero-building-fg.png"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className={`pointer-events-none z-20 ${imgClass}`}
-      />
 
       {/* Heading + Discover */}
       <div className="relative z-30 mt-4 flex w-full max-w-[720px] flex-col items-center px-6 text-center sm:mt-6">
