@@ -280,19 +280,40 @@ export function SejarahBand() {
   const active = open ?? cycled;
 
   return (
-    // The band is one photo, one screen tall. Collapsed it scrolls with the
-    // page like any other section. Open, it goes sticky and stays put while the
-    // card — 2014px of it, for Tarumanagara — travels across a photo that never
-    // moves, and only leaves once the section does.
+    // The band is one photo. Collapsed it scrolls with the page like any other
+    // section, sized to its cards — a screen tall from md up, only as tall as
+    // it needs to be below that. Open, it goes sticky and stays put, one screen
+    // at every width, while the card — 2014px of it, for Tarumanagara —
+    // travels across a photo that never moves, and only leaves once the section
+    // does.
     //
-    // Sticky means the band has to be in flow, which is what --band is for: the
-    // band is that tall, the card column is pulled back over it by exactly the
-    // same amount, and the section takes its floor from it too. So the section
-    // ends up as tall as its card and no taller — an open card hangs past the
-    // photo onto the page surface, and Visi always starts below the card rather
-    // than behind it. That last part is what Figma does: the collapsed page is
-    // 3659 tall, Candra Naya open 3962, Tarumanagara open 4897, and in each one
-    // Visi sits clear of the card (16:3294 leaves 90px, 16:3645 leaves 31px).
+    // The two states hang the photo differently, because they want opposite
+    // things from it.
+    //
+    // Open, sticky means the band has to be in flow, which is what --band is
+    // for: the band is that tall, the card column is pulled back over it by
+    // exactly the same amount, and the section takes its floor from it too. So
+    // the section ends up as tall as its card and no taller — an open card
+    // hangs past the photo onto the page surface, and Visi always starts below
+    // the card rather than behind it. That last part is what Figma does: the
+    // collapsed page is 3659 tall, Candra Naya open 3962, Tarumanagara open
+    // 4897, and in each one Visi sits clear of the card (16:3294 leaves 90px,
+    // 16:3645 leaves 31px).
+    //
+    // Collapsed there is nothing to pin, so the photo comes out of flow and
+    // fills the section instead — `absolute inset-0`, so it is exactly as tall
+    // as the section however tall the two cards make it. That is what --band
+    // could not do: as a fixed height it was a ceiling on the photo but not on
+    // the cards, and the pair plus the top padding already runs past one screen
+    // at common viewport heights, so the overflow came out as a white strip
+    // under the photo and cards drifting toward Visi. Now --band is at most a
+    // floor (min-h, and only from md up) and the photo follows the content
+    // from there.
+    //
+    // With the photo out of flow the padding can go on the section, the same
+    // clamp top and bottom, and the cards centre inside it — so the two boxes
+    // sit evenly in the photo at every height rather than 142px down from the
+    // top and flush against the bottom.
     //
     // z-20, not z-10: the Visi section that follows is `relative` with no
     // z-index of its own, so it never opens a stacking context and its inner
@@ -308,18 +329,44 @@ export function SejarahBand() {
       // svh is the stable floor, so the band is never shorter than the visible
       // area. (Tailwind v4 already needs a browser newer than svh's support.)
       style={{ "--band": "100svh" } as React.CSSProperties}
-      // min-h applies at every width now, not just md: the whole point is that
-      // the section is at least one screen tall. It is a floor, not a height —
-      // an open card is far taller and the section grows past the photo onto
-      // the page surface, which is what keeps Visi below the card.
-      className="relative z-20 min-h-[var(--band)] scroll-mt-[100px] bg-surface"
+      // The one-screen floor is a floor, not a height: an open card is far
+      // taller and the section grows past the photo onto the page surface,
+      // which is what keeps Visi below the card. Who needs the floor depends on
+      // the state, so each branch asks for it separately.
+      //
+      // Open, always — that is the pinned band, and it has to be a screen tall
+      // at every width for the card to have something to travel across.
+      //
+      // Collapsed, only from md up. On a desktop the floor is the point: the
+      // cards are a 727px column against the right half, so the photo needs the
+      // height to read as a full-bleed band at all. On a phone they are
+      // full-width blocks stacked with 48px of padding, so the photo is almost
+      // entirely behind them either way and the floor buys nothing but empty
+      // screen — a viewport of dead space before Visi. Below md the section is
+      // just as tall as the two cards need, and only grows to a screen when a
+      // card opens and there is actually something to scroll past.
+      //
+      // Collapsed also carries the padding and centres the cards in what is
+      // left. justify-center is not redundant with the symmetric padding: the
+      // padding only balances the two ends once the content is the thing
+      // setting the height, and above md the floor can still leave slack the
+      // cards would otherwise take entirely at the bottom.
+      className={`relative z-20 scroll-mt-[100px] bg-surface ${
+        open === null
+          ? "flex flex-col justify-center py-[clamp(48px,9.9vw,142px)] md:min-h-[var(--band)]"
+          : "min-h-[var(--band)]"
+      }`}
     >
       {/* Both photos stay mounted and cross-fade on opacity rather than
           swapping through AnimatePresence: the band changes on scroll, and a
           lazily-mounted <Image> would leave it empty for however long the first
           swap takes to fetch. */}
       <div
-        className={`${open ? "sticky" : "relative"} top-0 h-[var(--band)] overflow-hidden`}
+        className={
+          open
+            ? "sticky top-0 h-[var(--band)] overflow-hidden"
+            : "absolute inset-0 overflow-hidden"
+        }
       >
         {(["candra", "tarumanagara"] as const).map((topic) => (
           // A plain CSS transition rather than a motion.div: nothing mounts or
@@ -351,18 +398,18 @@ export function SejarahBand() {
         ))}
       </div>
 
-      {/* Pulled back up over the sticky band by its full height, so the cards
-          sit on the photo exactly as they did when the band was an overlay.
-          pb is Figma's 90px gap between the bottom of an open card and Visi
-          (16:3294), so it is only there while a card is open. Collapsed it was
-          not free after all: the two cards plus the top padding already run
-          past one screen at common viewport heights, so the section grew past
-          the band and the padding showed up as a blank white strip under the
-          photo. Without it the section falls back to its min-height and the
-          photo meets Visi. */}
+      {/* Open, the column is pulled back up over the sticky band by its full
+          height so the card sits on the photo, and pb is Figma's 90px gap
+          between the bottom of the card and Visi (16:3294) — the card is taller
+          than the band, so that gap lands on the page surface below it.
+          Collapsed, none of this applies: the photo is out of flow and there is
+          nothing to pull back over, so the spacing is the section's own
+          symmetric padding and the column just sits in it. */}
       <div
-        className={`site-container relative mt-[calc(var(--band)*-1)] pt-[clamp(48px,9.9vw,142px)] ${
-          open !== null ? "pb-20 sm:pb-28 md:pb-[90px]" : ""
+        className={`site-container relative ${
+          open !== null
+            ? "mt-[calc(var(--band)*-1)] pt-[clamp(48px,9.9vw,142px)] pb-20 sm:pb-28 md:pb-[90px]"
+            : ""
         }`}
       >
         {/* Figma puts the cards at x=624..1351 of 1440 — a 727px column hugging
