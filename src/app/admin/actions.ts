@@ -63,7 +63,10 @@ const toAdminJob = (r: JobRow): AdminJob => ({
 // ── Berita ────────────────────────────────────────────────────────────────
 const cachedNews = unstable_cache(
   async (): Promise<AdminNews[]> => {
-    const rows = await db.select().from(schema.news).orderBy(desc(schema.news.createdAt));
+    const rows = await db
+      .select()
+      .from(schema.news)
+      .orderBy(desc(schema.newsSortKey), desc(schema.news.createdAt));
     return rows.map(toAdminNews);
   },
   ["admin-news"],

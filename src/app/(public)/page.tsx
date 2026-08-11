@@ -73,15 +73,20 @@ export default async function HomePage() {
                       object-position, so the framing is 1:1 at every breakpoint
                       (they're percentages of the circle, which is 240/320/440).
                       No `fill` here: fill sets width/height inline and would
-                      fight these classes. The 103.74/135.33 ratio is the photo's
-                      own 788/1028, so nothing is squashed. */}
+                      fight these classes.
+                      Figma's own width (103.74%) minus that -4.36% offset only
+                      reaches 99.38%, leaving a ~3px white sliver at the circle's
+                      right edge, so the box is scaled up to 105% — enough to
+                      clear 100% after the offset. Height tracks it at the photo's
+                      own 788/1028 ratio (105 x 1028/788 = 136.97%) so object-cover
+                      has nothing to crop and nothing is squashed. */}
                   <Image
                     src="/images/chairman-ariawan.jpg"
                     alt="Prof. Dr. Ariawan Gunadi, S.H., M.H. — Ketua Yayasan Tarumanagara"
                     width={788}
                     height={1028}
                     sizes="(min-width: 1024px) 457px, (min-width: 640px) 332px, 249px"
-                    className="absolute left-[-4.36%] top-[-1.23%] h-[135.33%] w-[103.74%] max-w-none object-cover"
+                    className="absolute left-[-4.36%] top-[-1.23%] h-[136.97%] w-[105%] max-w-none object-cover"
                   />
                 </div>
               </div>

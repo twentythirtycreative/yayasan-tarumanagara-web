@@ -26,6 +26,13 @@ export const news = sqliteTable("news", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Sort key for "berita terbaru": the editor-set publication date, falling back
+ * to the row's creation timestamp when `published_at` was left empty. Both are
+ * ISO-prefixed text, so plain string ordering is chronological.
+ */
+export const newsSortKey = sql`coalesce(${news.publishedAt}, ${news.createdAt})`;
+
 /** Lowongan pekerjaan (Karir page listings). */
 export const jobs = sqliteTable("jobs", {
   id: text("id").primaryKey().$defaultFn(uuid),

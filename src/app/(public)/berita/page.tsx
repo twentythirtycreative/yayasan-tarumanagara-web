@@ -56,7 +56,12 @@ export default async function BeritaPage() {
                   />
                 </div>
                 <div
-                  className="glass-rim flex flex-col justify-center gap-6 px-8 py-6 backdrop-blur-md sm:px-12 sm:py-9"
+                  // The rim (`glass-rim::before`) inherits this element's radius,
+                  // so the outer corners must be repeated here — otherwise the
+                  // wrapper's overflow-hidden clips a square rim into the arc and
+                  // the white edge vanishes at those corners. Stacked on mobile
+                  // (bottom two corners), side-by-side from md (right two).
+                  className="glass-rim flex flex-col justify-center gap-6 rounded-bl-[22px] rounded-br-[22px] px-8 py-6 backdrop-blur-md sm:px-12 sm:py-9 md:rounded-bl-none md:rounded-tr-[36px] md:rounded-br-[36px]"
                   style={{
                     backgroundImage:
                       "linear-gradient(110.83deg, rgba(39,79,133,0.6) 9.25%, rgba(9,18,31,0.6) 52.8%)",

@@ -36,7 +36,8 @@ const toNewsItem = (r: Row): NewsItem => {
 };
 
 /**
- * Published news, newest first (same ordering as the admin list).
+ * Published news, newest first by publication date (same ordering as the admin
+ * list); createdAt breaks ties between articles sharing a date.
  * Cached in the Data Cache (tag "news"); invalidated when admin writes berita.
  */
 export const getPublishedNews = unstable_cache(
@@ -45,7 +46,7 @@ export const getPublishedNews = unstable_cache(
       .select()
       .from(schema.news)
       .where(eq(schema.news.published, true))
-      .orderBy(desc(schema.news.createdAt));
+      .orderBy(desc(schema.newsSortKey), desc(schema.news.createdAt));
     const rows = typeof limit === "number" ? await base.limit(limit) : await base;
     return rows.map(toNewsItem);
   },
