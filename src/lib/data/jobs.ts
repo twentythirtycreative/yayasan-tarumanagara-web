@@ -32,5 +32,5 @@ export const getOpenJobs = unstable_cache(
     }));
   },
   ["open-jobs"],
-  { tags: [CACHE_TAGS.jobs], revalidate: 3600 },
+  { tags: [CACHE_TAGS.jobs], revalidate: false },
 );

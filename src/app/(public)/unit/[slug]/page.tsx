@@ -8,6 +8,12 @@ export function generateStaticParams() {
   return units.map((u) => ({ slug: u.slug }));
 }
 
+// The unit list is a compile-time constant, so these five pages are the only
+// ones that can exist. Without this, any /unit/<anything> a crawler or scanner
+// invents is rendered on demand and its 404 written to the ISR cache — a billed
+// write per invented URL. false serves the 404 straight from the edge instead.
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {

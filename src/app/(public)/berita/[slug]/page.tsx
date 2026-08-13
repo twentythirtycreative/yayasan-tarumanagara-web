@@ -9,8 +9,11 @@ import { snippet } from "@/components/news-card";
 import { getNewsBySlug, getPublishedNews } from "@/lib/data/news";
 import { siteConfig } from "@/lib/site";
 
-export const revalidate = 3600;
+// Held until an admin write invalidates the "news" tag — see lib/cache.ts.
+export const revalidate = false;
 
+// dynamicParams stays on (the default): an article published after the last
+// deploy is not in generateStaticParams, and must still render on first visit.
 export async function generateStaticParams() {
   const news = await getPublishedNews();
   return news.map((n) => ({ slug: n.slug }));

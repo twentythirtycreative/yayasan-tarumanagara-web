@@ -12,7 +12,8 @@ export const metadata: Metadata = {
     "Ikuti berbagai informasi terbaru, kegiatan, kolaborasi, dan pencapaian Yayasan Tarumanagara.",
 };
 
-export const revalidate = 3600;
+// Held until an admin write invalidates the "news" tag — see lib/cache.ts.
+export const revalidate = false;
 
 export default async function BeritaPage() {
   const news = await getPublishedNews();

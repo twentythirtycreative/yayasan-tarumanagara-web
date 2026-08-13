@@ -51,7 +51,7 @@ export const getPublishedNews = unstable_cache(
     return rows.map(toNewsItem);
   },
   ["published-news"],
-  { tags: [CACHE_TAGS.news], revalidate: 3600 },
+  { tags: [CACHE_TAGS.news], revalidate: false },
 );
 
 /** A single published article by slug (drafts return null for the public). */
@@ -65,5 +65,5 @@ export const getNewsBySlug = unstable_cache(
     return row ? toNewsItem(row) : null;
   },
   ["news-by-slug"],
-  { tags: [CACHE_TAGS.news], revalidate: 3600 },
+  { tags: [CACHE_TAGS.news], revalidate: false },
 );

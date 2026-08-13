@@ -6,7 +6,8 @@ import { getOpenJobs } from "@/lib/data/jobs";
 import { CvForm } from "./cv-form";
 
 export const metadata: Metadata = { title: "Kirim CV" };
-export const revalidate = 3600;
+// Held until an admin write invalidates the "jobs" tag — see lib/cache.ts.
+export const revalidate = false;
 
 export default async function KirimCvPage() {
   const jobs = await getOpenJobs();

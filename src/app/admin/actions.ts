@@ -1,7 +1,7 @@
 "use server";
 
 import { asc, desc, eq } from "drizzle-orm";
-import { revalidatePath, unstable_cache, updateTag } from "next/cache";
+import { unstable_cache, updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
@@ -15,22 +15,25 @@ import type {
 } from "./types";
 
 // Invalidate the Data Cache + affected public routes after a write.
+//
+// One `updateTag` per domain is the whole job. Next stamps the tags collected
+// during a render onto the route's prerender entry, so the "news" tag reaches
+// the cached query *and* every page built from it — /, /berita, /berita/[slug],
+// /sitemap.xml (see `x-next-cache-tags` in .next/server/app/*.meta). The
+// `revalidatePath` calls that used to sit here named those same routes by hand:
+// redundant, and one of them ("/berita/[slug]", "page") swept every article page
+// on any single-article edit.
+//
+// updateTag (not revalidateTag) because these run inside Server Actions and the
+// admin must see the change on the next request, not stale-while-revalidate.
 function revalidateNews() {
-  // News publication changes must be visible on the very next public request.
-  // updateTag expires the cached query immediately instead of serving stale data.
   updateTag(CACHE_TAGS.news);
-  revalidatePath("/");
-  revalidatePath("/berita");
-  revalidatePath("/berita/[slug]", "page");
 }
 function revalidateJobs() {
   updateTag(CACHE_TAGS.jobs);
-  revalidatePath("/karir");
-  revalidatePath("/karir/kirim-cv");
 }
 function revalidateGovernance() {
   updateTag(CACHE_TAGS.governance);
-  revalidatePath("/tentang-kami");
 }
 
 // ── Mappers ───────────────────────────────────────────────────────────────
@@ -70,7 +73,7 @@ const cachedNews = unstable_cache(
     return rows.map(toAdminNews);
   },
   ["admin-news"],
-  { tags: [CACHE_TAGS.news], revalidate: 3600 },
+  { tags: [CACHE_TAGS.news], revalidate: false },
 );
 
 export async function listNews(): Promise<AdminNews[]> {
@@ -164,7 +167,7 @@ const cachedJobs = unstable_cache(
     return rows.map(toAdminJob);
   },
   ["admin-jobs"],
-  { tags: [CACHE_TAGS.jobs], revalidate: 3600 },
+  { tags: [CACHE_TAGS.jobs], revalidate: false },
 );
 
 export async function listJobs(): Promise<AdminJob[]> {
@@ -243,7 +246,7 @@ const cachedGovernance = unstable_cache(
     return rows.map(toAdminGovernance);
   },
   ["admin-governance"],
-  { tags: [CACHE_TAGS.governance], revalidate: 3600 },
+  { tags: [CACHE_TAGS.governance], revalidate: false },
 );
 
 export async function listGovernanceMembers(): Promise<AdminGovernanceMember[]> {

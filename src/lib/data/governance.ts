@@ -57,7 +57,7 @@ const cachedMembers = unstable_cache(
     }));
   },
   ["governance-members"],
-  { tags: [CACHE_TAGS.governance], revalidate: 3600 },
+  { tags: [CACHE_TAGS.governance], revalidate: false },
 );
 
 export async function getGovernanceMembers(): Promise<

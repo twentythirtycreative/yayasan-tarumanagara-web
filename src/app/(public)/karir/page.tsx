@@ -11,8 +11,8 @@ export const metadata: Metadata = {
     "Bangun karier bersama Yayasan Tarumanagara. Temukan peluang di lingkungan yang menjunjung integritas, kolaborasi, dan inovasi.",
 };
 
-// Cached long; admin writes invalidate this route instantly (revalidatePath).
-export const revalidate = 3600;
+// Held until an admin write invalidates the "jobs" tag — see lib/cache.ts.
+export const revalidate = false;
 
 function JobCard({ job }: { job: JobListing }) {
   return (
