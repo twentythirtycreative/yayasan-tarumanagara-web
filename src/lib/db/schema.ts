@@ -4,17 +4,42 @@ import { GOVERNANCE_ROLES } from "@/lib/governance-roles";
 
 const uuid = () => crypto.randomUUID();
 
+/**
+ * Uploaded image bytes (news covers, Tata Kelola portraits).
+ *
+ * Turso has no object storage, so the bytes live here as a BLOB and the owning
+ * row keeps only a short reference — "/api/images/<id>", served by
+ * `app/api/images/[id]/route.ts`.
+ *
+ * They used to sit inline in the owning row as a base64 `data:` URL, which put
+ * ~3.5 MB of image into every cached list payload: past the Data Cache's 2 MB
+ * per-item ceiling, so `unstable_cache` threw on write and the admin panel came
+ * up empty. Keeping the bytes out of the row keeps those payloads in kilobytes.
+ *
+ * Rows are immutable: replacing a photo inserts a new id and deletes the old
+ * row, which is what lets the route serve them with a long immutable max-age.
+ */
+export const images = sqliteTable("images", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  /** e.g. "image/webp" — echoed back as the response Content-Type. */
+  mimeType: text("mime_type").notNull(),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  /** Decoded size, so admin tooling can report usage without reading the blob. */
+  byteSize: integer("byte_size").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Berita & Kegiatan (news / activities). */
 export const news = sqliteTable("news", {
   id: text("id").primaryKey().$defaultFn(uuid),
   slug: text("slug").notNull().unique(),
   title: text("title").notNull(),
-  excerpt: text("excerpt").notNull().default(""),
   content: text("content").notNull().default(""),
   /** Byline shown on the article. */
   author: text("author").notNull().default("Redaksi"),
   /** Italic photo caption shown under the article cover image. */
   caption: text("caption"),
+  /** "/api/images/<id>" (see `images`), or a /public path. Never inline base64. */
   coverImageUrl: text("cover_image_url"),
   tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default([]),
   /** Human display date, e.g. "13 August 2025". */
@@ -77,6 +102,7 @@ export const governanceMembers = sqliteTable(
     name: text("name").notNull(),
     /** Jabatan, shown in smaller type under the name on the card. */
     position: text("position").notNull().default(""),
+    /** "/api/images/<id>" (see `images`), or a /public path. Never inline base64. */
     photoUrl: text("photo_url"),
     /**
      * CSS object-position for the portrait, e.g. "50% 14%". Every headshot is
@@ -120,6 +146,8 @@ export const loginAttempts = sqliteTable("login_attempts", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export type Image = typeof images.$inferSelect;
+export type NewImage = typeof images.$inferInsert;
 export type News = typeof news.$inferSelect;
 export type NewNews = typeof news.$inferInsert;
 export type Job = typeof jobs.$inferSelect;

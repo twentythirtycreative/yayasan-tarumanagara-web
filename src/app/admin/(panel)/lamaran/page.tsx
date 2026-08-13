@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Download,
@@ -16,6 +16,7 @@ import { useAdmin } from "../../_store";
 import { getApplicationCv } from "../../actions";
 import { useConfirm } from "../confirm";
 import { FilterMenu } from "../filter-menu";
+import { useAnchoredMenu } from "../use-anchored-menu";
 import { parseDbTimestamp } from "@/lib/format-date";
 import { exportApplicationsExcel } from "./export-excel";
 
@@ -48,41 +49,16 @@ function RowActions({
   onDownload: () => Promise<void>;
   onDelete: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => {
-      if (!downloading) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("scroll", close, true);
-    window.addEventListener("resize", close);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("scroll", close, true);
-      window.removeEventListener("resize", close);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, downloading]);
-
-  const toggle = () => {
-    const r = btnRef.current?.getBoundingClientRect();
-    if (r) {
-      const width = 176; // w-44
-      const left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
-      setPos({ top: r.bottom + 6, left });
-    }
-    setOpen((v) => !v);
-  };
+  // Menu tidak boleh menutup sendiri selagi CV sedang diunduh.
+  const { open, setOpen, toggle, anchorRef, menuRef, menuStyle } = useAnchoredMenu({
+    dismissable: !downloading,
+  });
 
   return (
     <>
       <button
-        ref={btnRef}
+        ref={anchorRef}
         type="button"
         aria-label="Aksi"
         onClick={toggle}
@@ -100,7 +76,8 @@ function RowActions({
             onClick={() => setOpen(false)}
           />
           <div
-            style={{ top: pos.top, left: pos.left }}
+            ref={menuRef}
+            style={menuStyle}
             className="fixed z-50 w-44 rounded-2xl border border-black/[0.06] bg-white p-1.5 shadow-[0px_16px_40px_rgba(0,34,79,0.18)]"
           >
             <button

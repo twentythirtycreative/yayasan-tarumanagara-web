@@ -1,11 +1,12 @@
 "use server";
 
 import { asc, desc, eq } from "drizzle-orm";
-import { unstable_cache, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
 import { requireAdmin } from "@/lib/auth/guard";
+import { deleteStoredImage, persistImageField } from "@/lib/images";
 import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
 import type {
   AdminGovernanceMember,
@@ -64,21 +65,19 @@ const toAdminJob = (r: JobRow): AdminJob => ({
 });
 
 // ── Berita ────────────────────────────────────────────────────────────────
-const cachedNews = unstable_cache(
-  async (): Promise<AdminNews[]> => {
-    const rows = await db
-      .select()
-      .from(schema.news)
-      .orderBy(desc(schema.newsSortKey), desc(schema.news.createdAt));
-    return rows.map(toAdminNews);
-  },
-  ["admin-news"],
-  { tags: [CACHE_TAGS.news], revalidate: false },
-);
-
+// The admin lists below are deliberately uncached. The panel is a handful of
+// signed-in users, it must show what was just written, and `_store.tsx` already
+// updates optimistically — so a Data Cache entry bought nothing while adding a
+// failure mode: an oversized payload makes `unstable_cache` throw on write, and
+// one rejected list empties the whole panel. Public reads stay cached in
+// `src/lib/data/*` (tags below still invalidate them).
 export async function listNews(): Promise<AdminNews[]> {
   await requireAdmin();
-  return cachedNews();
+  const rows = await db
+    .select()
+    .from(schema.news)
+    .orderBy(desc(schema.newsSortKey), desc(schema.news.createdAt));
+  return rows.map(toAdminNews);
 }
 
 export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
@@ -100,6 +99,17 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
   if (clash && clash.id !== item.id) {
     return { error: "Slug sudah dipakai artikel lain. Ubah judul atau slug." };
   }
+  // Move the upload into the `images` table (and drop the cover it replaces)
+  // only after the checks above, so a rejected save leaves no orphan blob.
+  const [existing] = await db
+    .select({ coverImageUrl: schema.news.coverImageUrl })
+    .from(schema.news)
+    .where(eq(schema.news.id, item.id));
+  const coverImageUrl = await persistImageField(
+    item.coverImageUrl,
+    existing?.coverImageUrl ?? null,
+  );
+
   const values = {
     id: item.id,
     title: item.title,
@@ -108,7 +118,7 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
     author: item.author || "Redaksi",
     caption: item.caption || null,
     tags: item.tags,
-    coverImageUrl: item.coverImageUrl || null,
+    coverImageUrl,
     dateLabel: item.dateLabel,
     publishedAt: item.publishedAt || null,
     published: item.published,
@@ -138,7 +148,13 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
 
 export async function deleteNews(id: string): Promise<void> {
   await requireAdmin();
+  // Read the cover first — once the row is gone its blob is unreachable.
+  const [row] = await db
+    .select({ coverImageUrl: schema.news.coverImageUrl })
+    .from(schema.news)
+    .where(eq(schema.news.id, id));
   await db.delete(schema.news).where(eq(schema.news.id, id));
+  await deleteStoredImage(row?.coverImageUrl);
   revalidateNews();
 }
 
@@ -161,18 +177,10 @@ export async function togglePublish(id: string): Promise<{ published: boolean } 
 }
 
 // ── Lowongan ──────────────────────────────────────────────────────────────
-const cachedJobs = unstable_cache(
-  async (): Promise<AdminJob[]> => {
-    const rows = await db.select().from(schema.jobs).orderBy(desc(schema.jobs.createdAt));
-    return rows.map(toAdminJob);
-  },
-  ["admin-jobs"],
-  { tags: [CACHE_TAGS.jobs], revalidate: false },
-);
-
 export async function listJobs(): Promise<AdminJob[]> {
   await requireAdmin();
-  return cachedJobs();
+  const rows = await db.select().from(schema.jobs).orderBy(desc(schema.jobs.createdAt));
+  return rows.map(toAdminJob);
 }
 
 export async function saveJob(item: AdminJob): Promise<void> {
@@ -237,21 +245,13 @@ const toAdminGovernance = (r: GovernanceRow): AdminGovernanceMember => ({
   published: r.published,
 });
 
-const cachedGovernance = unstable_cache(
-  async (): Promise<AdminGovernanceMember[]> => {
-    const rows = await db
-      .select()
-      .from(schema.governanceMembers)
-      .orderBy(asc(schema.governanceMembers.sortOrder), asc(schema.governanceMembers.name));
-    return rows.map(toAdminGovernance);
-  },
-  ["admin-governance"],
-  { tags: [CACHE_TAGS.governance], revalidate: false },
-);
-
 export async function listGovernanceMembers(): Promise<AdminGovernanceMember[]> {
   await requireAdmin();
-  return cachedGovernance();
+  const rows = await db
+    .select()
+    .from(schema.governanceMembers)
+    .orderBy(asc(schema.governanceMembers.sortOrder), asc(schema.governanceMembers.name));
+  return rows.map(toAdminGovernance);
 }
 
 export async function saveGovernanceMember(
@@ -264,12 +264,18 @@ export async function saveGovernanceMember(
   ) {
     return { error: "Ukuran foto melebihi batas." };
   }
+  const [existing] = await db
+    .select({ photoUrl: schema.governanceMembers.photoUrl })
+    .from(schema.governanceMembers)
+    .where(eq(schema.governanceMembers.id, item.id));
+  const photoUrl = await persistImageField(item.photoUrl, existing?.photoUrl ?? null);
+
   const values = {
     id: item.id,
     role: item.role,
     name: item.name,
     position: item.position,
-    photoUrl: item.photoUrl || null,
+    photoUrl,
     photoPosition: item.photoPosition || "50% 50%",
     sortOrder: item.sortOrder,
     published: item.published,
@@ -296,7 +302,12 @@ export async function saveGovernanceMember(
 
 export async function deleteGovernanceMember(id: string): Promise<void> {
   await requireAdmin();
+  const [row] = await db
+    .select({ photoUrl: schema.governanceMembers.photoUrl })
+    .from(schema.governanceMembers)
+    .where(eq(schema.governanceMembers.id, id));
   await db.delete(schema.governanceMembers).where(eq(schema.governanceMembers.id, id));
+  await deleteStoredImage(row?.photoUrl);
   revalidateGovernance();
 }
 

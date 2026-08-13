@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff } from "lucide-react";
 import { FilterMenu } from "../filter-menu";
+import { useAnchoredMenu } from "../use-anchored-menu";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "../../_store";
 import { useConfirm } from "../confirm";
@@ -21,33 +22,7 @@ function RowActions({
   onTogglePublish: () => void;
   onDelete: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("scroll", close, true);
-    window.addEventListener("resize", close);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("scroll", close, true);
-      window.removeEventListener("resize", close);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const toggle = () => {
-    const r = btnRef.current?.getBoundingClientRect();
-    if (r) {
-      const width = 192; // w-48
-      const left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
-      setPos({ top: r.bottom + 6, left });
-    }
-    setOpen((v) => !v);
-  };
+  const { open, setOpen, toggle, anchorRef, menuRef, menuStyle } = useAnchoredMenu();
 
   const itemCls =
     "flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors";
@@ -55,7 +30,7 @@ function RowActions({
   return (
     <>
       <button
-        ref={btnRef}
+        ref={anchorRef}
         type="button"
         aria-label="Aksi"
         onClick={toggle}
@@ -67,7 +42,8 @@ function RowActions({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            style={{ top: pos.top, left: pos.left }}
+            ref={menuRef}
+            style={menuStyle}
             className="fixed z-50 w-48 rounded-2xl border border-black/[0.06] bg-white p-1.5 shadow-[0px_16px_40px_rgba(0,34,79,0.18)]"
           >
             <button

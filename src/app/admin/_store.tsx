@@ -54,25 +54,33 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     (async () => {
-      try {
-        const [n, j, a, g, me] = await Promise.all([
-          api.listNews(),
-          api.listJobs(),
-          api.listApplications(),
-          api.listGovernanceMembers(),
-          api.getCurrentAdmin(),
-        ]);
-        if (!active) return;
-        setNews(n);
-        setJobs(j);
-        setApplications(a);
-        setGovernance(g);
-        setAdminEmail(me.email);
-      } catch (err) {
-        console.error("Gagal memuat data admin (cek koneksi Turso):", err);
-      } finally {
-        if (active) setLoading(false);
-      }
+      // allSettled, not all: these five are independent, and with Promise.all a
+      // single rejection left every section empty — the whole panel looked blank
+      // because one query failed. Each list now fails on its own.
+      const [n, j, a, g, me] = await Promise.allSettled([
+        api.listNews(),
+        api.listJobs(),
+        api.listApplications(),
+        api.listGovernanceMembers(),
+        api.getCurrentAdmin(),
+      ]);
+      if (!active) return;
+
+      const apply = <T,>(
+        label: string,
+        result: PromiseSettledResult<T>,
+        set: (value: T) => void,
+      ) => {
+        if (result.status === "fulfilled") set(result.value);
+        else console.error(`Gagal memuat ${label} (cek koneksi Turso):`, result.reason);
+      };
+
+      apply("berita", n, setNews);
+      apply("lowongan", j, setJobs);
+      apply("lamaran", a, setApplications);
+      apply("tata kelola", g, setGovernance);
+      apply("identitas admin", me, (v) => setAdminEmail(v.email));
+      setLoading(false);
     })();
     return () => {
       active = false;
