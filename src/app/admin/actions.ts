@@ -5,7 +5,8 @@ import { updateTag } from "next/cache";
 import { db, schema } from "@/lib/db";
 import { CACHE_TAGS } from "@/lib/cache";
 import { formatDateId } from "@/lib/format-date";
-import { requireAdmin } from "@/lib/auth/guard";
+import { requireAdmin, requireSection } from "@/lib/auth/guard";
+import type { AdminRole } from "@/lib/auth/roles";
 import { deleteStoredImage, persistImageField } from "@/lib/images";
 import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
 import type {
@@ -72,7 +73,7 @@ const toAdminJob = (r: JobRow): AdminJob => ({
 // one rejected list empties the whole panel. Public reads stay cached in
 // `src/lib/data/*` (tags below still invalidate them).
 export async function listNews(): Promise<AdminNews[]> {
-  await requireAdmin();
+  await requireSection("berita");
   const rows = await db
     .select()
     .from(schema.news)
@@ -81,7 +82,7 @@ export async function listNews(): Promise<AdminNews[]> {
 }
 
 export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
-  await requireAdmin();
+  await requireSection("berita");
   // Enforce the cover-image size cap server-side (base64 data URLs).
   if (
     item.coverImageUrl.startsWith("data:") &&
@@ -147,7 +148,7 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
 }
 
 export async function deleteNews(id: string): Promise<void> {
-  await requireAdmin();
+  await requireSection("berita");
   // Read the cover first — once the row is gone its blob is unreachable.
   const [row] = await db
     .select({ coverImageUrl: schema.news.coverImageUrl })
@@ -161,7 +162,7 @@ export async function deleteNews(id: string): Promise<void> {
 // Returns the new published state (authoritative), or null if the row is gone
 // (e.g. deleted by another admin) so the client can reconcile.
 export async function togglePublish(id: string): Promise<{ published: boolean } | null> {
-  await requireAdmin();
+  await requireSection("berita");
   const [row] = await db
     .select({ published: schema.news.published })
     .from(schema.news)
@@ -178,13 +179,13 @@ export async function togglePublish(id: string): Promise<{ published: boolean } 
 
 // ── Lowongan ──────────────────────────────────────────────────────────────
 export async function listJobs(): Promise<AdminJob[]> {
-  await requireAdmin();
+  await requireSection("lowongan");
   const rows = await db.select().from(schema.jobs).orderBy(desc(schema.jobs.createdAt));
   return rows.map(toAdminJob);
 }
 
 export async function saveJob(item: AdminJob): Promise<void> {
-  await requireAdmin();
+  await requireSection("lowongan");
   const values = {
     id: item.id,
     title: item.title,
@@ -210,13 +211,13 @@ export async function saveJob(item: AdminJob): Promise<void> {
 }
 
 export async function deleteJob(id: string): Promise<void> {
-  await requireAdmin();
+  await requireSection("lowongan");
   await db.delete(schema.jobs).where(eq(schema.jobs.id, id));
   revalidateJobs();
 }
 
 export async function toggleJobOpen(id: string): Promise<{ isOpen: boolean } | null> {
-  await requireAdmin();
+  await requireSection("lowongan");
   const [row] = await db
     .select({ isOpen: schema.jobs.isOpen })
     .from(schema.jobs)
@@ -246,7 +247,7 @@ const toAdminGovernance = (r: GovernanceRow): AdminGovernanceMember => ({
 });
 
 export async function listGovernanceMembers(): Promise<AdminGovernanceMember[]> {
-  await requireAdmin();
+  await requireSection("tata-kelola");
   const rows = await db
     .select()
     .from(schema.governanceMembers)
@@ -257,7 +258,7 @@ export async function listGovernanceMembers(): Promise<AdminGovernanceMember[]> 
 export async function saveGovernanceMember(
   item: AdminGovernanceMember,
 ): Promise<{ error?: string }> {
-  await requireAdmin();
+  await requireSection("tata-kelola");
   if (
     item.photoUrl.startsWith("data:") &&
     dataUrlBytes(item.photoUrl) > MAX_IMAGE_SIZE
@@ -301,7 +302,7 @@ export async function saveGovernanceMember(
 }
 
 export async function deleteGovernanceMember(id: string): Promise<void> {
-  await requireAdmin();
+  await requireSection("tata-kelola");
   const [row] = await db
     .select({ photoUrl: schema.governanceMembers.photoUrl })
     .from(schema.governanceMembers)
@@ -314,7 +315,7 @@ export async function deleteGovernanceMember(id: string): Promise<void> {
 export async function toggleGovernancePublished(
   id: string,
 ): Promise<{ published: boolean } | null> {
-  await requireAdmin();
+  await requireSection("tata-kelola");
   const [row] = await db
     .select({ published: schema.governanceMembers.published })
     .from(schema.governanceMembers)
@@ -341,7 +342,7 @@ export async function moveGovernanceMember(
   id: string,
   direction: -1 | 1,
 ): Promise<string[] | null> {
-  await requireAdmin();
+  await requireSection("tata-kelola");
   const [target] = await db
     .select({ role: schema.governanceMembers.role })
     .from(schema.governanceMembers)
@@ -376,7 +377,7 @@ export async function moveGovernanceMember(
 // Not cached: admin-only, low traffic, and freshness matters (new CV submits
 // must appear immediately).
 export async function listApplications(): Promise<Application[]> {
-  await requireAdmin();
+  await requireSection("lamaran");
   // Intentionally omit the CV blob from the list query.
   const rows = await db
     .select({
@@ -396,21 +397,21 @@ export async function listApplications(): Promise<Application[]> {
 }
 
 export async function deleteApplication(id: string): Promise<void> {
-  await requireAdmin();
+  await requireSection("lamaran");
   await db.delete(schema.applications).where(eq(schema.applications.id, id));
 }
 
-/** The signed-in admin's identity (for the panel avatar/header). */
-export async function getCurrentAdmin(): Promise<{ email: string }> {
+/** The signed-in admin's identity + role (for the panel avatar/header). */
+export async function getCurrentAdmin(): Promise<{ email: string; role: AdminRole }> {
   const session = await requireAdmin();
-  return { email: session.email };
+  return { email: session.email, role: session.role };
 }
 
 /** Fetch a single CV file (base64) for download. */
 export async function getApplicationCv(
   id: string,
 ): Promise<{ name: string; type: string; base64: string } | null> {
-  await requireAdmin();
+  await requireSection("lamaran");
   const [row] = await db
     .select({
       cvName: schema.applications.cvName,

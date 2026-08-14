@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/lib/auth/session";
+import { isAdminRole } from "@/lib/auth/roles";
 
 export type LoginState = { error?: string };
 
@@ -93,7 +94,12 @@ export async function login(
   // Success → clear the failure counter for this email.
   await clearAttempts(email);
 
-  const token = await signSession({ sub: user.id, email: user.email });
+  const token = await signSession({
+    sub: user.id,
+    email: user.email,
+    // Rows written before the `role` column existed read back as null.
+    role: isAdminRole(user.role) ? user.role : "master",
+  });
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,

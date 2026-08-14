@@ -34,7 +34,7 @@ CMS admin untuk mengelola Berita & Kegiatan, Lowongan Kerja, dan Lamaran (Kirim 
 npm install
 cp .env.example .env.development.local   # isi nilai dari Turso (DB dev)
 npm run db:push                          # buat tabel di Turso dari schema Drizzle
-npm run create-admin -- "admin@domain.com" "kata-sandi-kuat"
+npm run create-admin -- "admin@domain.com" "kata-sandi-kuat" master
 npm run dev                              # http://localhost:3000
 ```
 
@@ -77,7 +77,8 @@ DOTENV_FILE=.env.production.local npm run db:push
 | `npm run db:push` | Terapkan schema Drizzle ke Turso |
 | `npm run db:generate` / `db:migrate` | Migrasi berbasis file (opsional) |
 | `npm run db:studio` | Drizzle Studio |
-| `npm run create-admin -- "<email>" "<password>"` | Buat / reset akun admin |
+| `npm run create-admin -- "<email>" "<password>" [master\|hr\|humas]` | Buat / reset akun admin (role default `master`) |
+| `npm run migrate:admin-role` | Tambah kolom RBAC `role` ke `admin_users` (idempoten) |
 
 ## Struktur singkat
 

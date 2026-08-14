@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "create-admin": "node scripts/create-admin.cjs",
-    "migrate:job-types": "node scripts/rename-job-types.cjs"
+    "migrate:job-types": "node scripts/rename-job-types.cjs",
+    "migrate:admin-role": "node scripts/add-admin-role.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

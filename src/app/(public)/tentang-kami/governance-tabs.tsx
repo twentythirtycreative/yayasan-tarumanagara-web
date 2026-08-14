@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GOVERNANCE_ROLES, type GovernanceRole } from "@/lib/governance-roles";
@@ -55,6 +55,30 @@ export function GovernanceTabs({
       if (raf) cancelAnimationFrame(raf);
     };
   }, [selected, active]);
+
+  // Only the active tab's cards are mounted, so Pengurus/Pengawas photos would
+  // start a cold fetch on the first click and pop in behind the slide. Warm
+  // every tab's photo once, off-screen, deduped by src (the same person can
+  // appear in more than one tab). `sizes` matches the card exactly so the
+  // browser picks the same srcset candidate and the click is a cache hit.
+  const warmSrcs = useMemo(() => {
+    const seen = new Set<string>();
+    for (const tab of TABS) for (const p of people[tab]) seen.add(p.photo);
+    return [...seen];
+  }, [people]);
+
+  // Deferred to idle so this never competes with the visible tab's `priority`
+  // images or the page's LCP — it only has to be ready before the first click.
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    const ric = window.requestIdleCallback;
+    if (ric) {
+      const id = ric(() => setWarm(true), { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(() => setWarm(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   const go = (dir: 1 | -1) =>
     setSelected((prev) => Math.max(0, Math.min(count - 1, prev + dir)));
@@ -168,6 +192,30 @@ export function GovernanceTabs({
           </button>
         </div>
       </div>
+
+      {/* Off-screen warm-up. `loading="eager"` is required: a lazy image inside
+          a collapsed box never intersects the viewport, so it would never
+          fetch at all. Kept out of layout and out of the a11y tree. */}
+      {warm && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed top-0 left-0 h-px w-px overflow-hidden opacity-0"
+        >
+          {warmSrcs.map((src) => (
+            <div key={src} className="relative h-[378px] w-[316px]">
+              <Image
+                src={src}
+                alt=""
+                fill
+                sizes="316px"
+                loading="eager"
+                unoptimized={src.startsWith("data:")}
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

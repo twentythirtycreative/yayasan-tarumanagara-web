@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as api from "./actions";
+import { can, type AdminRole } from "@/lib/auth/roles";
 import type {
   AdminGovernanceMember,
   AdminJob,
@@ -17,12 +18,15 @@ export type {
   GovernanceRole,
 } from "./types";
 export { NEWS_TAGS, GOVERNANCE_ROLES, slugify, shortId } from "./types";
+export { can, ROLE_LABELS, type AdminRole } from "@/lib/auth/roles";
 
 type Store = {
   news: AdminNews[];
   jobs: AdminJob[];
   applications: Application[];
   adminEmail: string;
+  /** RBAC role of the signed-in admin — pages use `can(role, …)` to scope UI. */
+  role: AdminRole;
   loading: boolean;
   saveNews: (n: AdminNews) => Promise<void>;
   deleteNews: (id: string) => Promise<void>;
@@ -43,7 +47,13 @@ type Store = {
 
 const AdminCtx = createContext<Store | null>(null);
 
-export function AdminStoreProvider({ children }: { children: ReactNode }) {
+export function AdminStoreProvider({
+  role,
+  children,
+}: {
+  role: AdminRole;
+  children: ReactNode;
+}) {
   const [news, setNews] = useState<AdminNews[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -57,11 +67,16 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       // allSettled, not all: these five are independent, and with Promise.all a
       // single rejection left every section empty — the whole panel looked blank
       // because one query failed. Each list now fails on its own.
+      //
+      // A list the role can't reach isn't requested at all: `requireSection`
+      // would reject it server-side, and that rejection is expected, not a
+      // fault worth logging.
+      const skip = Promise.resolve([]);
       const [n, j, a, g, me] = await Promise.allSettled([
-        api.listNews(),
-        api.listJobs(),
-        api.listApplications(),
-        api.listGovernanceMembers(),
+        can(role, "berita") ? api.listNews() : skip,
+        can(role, "lowongan") ? api.listJobs() : skip,
+        can(role, "lamaran") ? api.listApplications() : skip,
+        can(role, "tata-kelola") ? api.listGovernanceMembers() : skip,
         api.getCurrentAdmin(),
       ]);
       if (!active) return;
@@ -85,13 +100,16 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+    // `role` comes from the server layout and is fixed for the session; listed
+    // only to satisfy the exhaustive-deps rule.
+  }, [role]);
 
   const store: Store = {
     news,
     jobs,
     applications,
     adminEmail,
+    role,
     loading,
     saveNews: async (n) => {
       const res = await api.saveNews(n);

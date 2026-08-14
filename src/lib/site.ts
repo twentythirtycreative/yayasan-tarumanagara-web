@@ -15,7 +15,7 @@ export const siteConfig = {
     "Yayasan Tarumanagara adalah lembaga nirlaba yang didirikan pada 18 Juni 1959. Yayasan ini berfokus pada pelayanan masyarakat di bidang pendidikan, kesehatan, dan pengabdian",
   email: "info@tarumanagara.org",
   /** Navbar CTA target — Untar admission site (Figma 342:1764 "Daftar Untar"). */
-  daftarUntarUrl: "https://untar.ac.id",
+  daftarUntarUrl: "https://go.untar.ac.id/",
   social: {
     linkedin: "https://www.linkedin.com/",
     instagram: "https://www.instagram.com/",

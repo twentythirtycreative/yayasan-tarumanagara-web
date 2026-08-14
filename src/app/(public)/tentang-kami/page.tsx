@@ -36,16 +36,22 @@ export default async function TentangKamiPage() {
           of the padding, with the content centred inside; py stays as a floor in
           case the copy wraps to more lines. */}
       <section className="relative flex items-center overflow-hidden py-16 md:min-h-[320px] md:py-10">
-        {/* Figma 376:975 exports this photo already darkened, then lays a flat
-            25% black over it. Sampling that asset against our source puts it at
-            a uniform 0.69x (sky 0.67, centre 0.72, lower band 0.70, full frame
-            0.690) — a plain multiply, no contrast curve. */}
+        {/* Figma 40:3565 swapped the stock office block for the Untar tower —
+            the same source we already ship as hero-untar.jpg — and pushed it
+            much darker. Registering the export (1440x359) against the treated
+            photo puts the crop at scale 1.40625 with a 400px top offset, i.e.
+            object-position 400/596 = 67%, not flush bottom. Figma exports the
+            photo already treated, then lays a flat 25% black over it. Fitting
+            that asset against our source (least squares, CSS luma weights)
+            gives out = 0.290*g + 8.15, i.e. brightness(0.31) then
+            contrast(0.94); the simulated mean lands at 38.9 against the
+            export's 38.8. */}
         <Image
-          src="/images/visi-bg.jpg"
+          src="/images/hero-untar.jpg"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover grayscale brightness-[0.69]"
+          className="object-cover object-[center_67%] grayscale brightness-[0.31] contrast-[0.94]"
         />
         <div className="absolute inset-0 bg-black/25" />
         {/* Content inset deeper than the global margin, matching the Misi row. */}

@@ -4,21 +4,47 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff, Link2 } from "lucide-react";
 import { FilterMenu } from "../filter-menu";
 import { useAnchoredMenu } from "../use-anchored-menu";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "../../_store";
 import { useConfirm } from "../confirm";
 
+/**
+ * Copy text without depending on `navigator.clipboard`, which is undefined on
+ * plain-HTTP origins (e.g. testing the panel over a LAN IP).
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 function RowActions({
   published,
   editHref,
+  onCopyLink,
   onTogglePublish,
   onDelete,
 }: {
   published: boolean;
   editHref: string;
+  onCopyLink: () => void;
   onTogglePublish: () => void;
   onDelete: () => void;
 }) {
@@ -46,6 +72,16 @@ function RowActions({
             style={menuStyle}
             className="fixed z-50 w-48 rounded-2xl border border-black/[0.06] bg-white p-1.5 shadow-[0px_16px_40px_rgba(0,34,79,0.18)]"
           >
+            <button
+              type="button"
+              onClick={() => {
+                onCopyLink();
+                setOpen(false);
+              }}
+              className={cn(itemCls, "text-ink/75 hover:bg-black/[0.04] hover:text-[#014aaf]")}
+            >
+              <Link2 className="h-4 w-4 text-[#014aaf]" /> Salin tautan
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -110,6 +146,18 @@ function NewsRowActions({ item }: { item: NewsItem }) {
     <RowActions
       published={item.published}
       editHref={`/admin/berita/${item.id}`}
+      onCopyLink={async () => {
+        const url = `${window.location.origin}/berita/${item.slug}`;
+        if (!(await copyText(url))) {
+          toast.error("Gagal menyalin tautan.");
+          return;
+        }
+        toast.success(
+          item.published
+            ? "Tautan disalin"
+            : "Tautan disalin — berita masih draf, belum bisa dibuka publik.",
+        );
+      }}
       onTogglePublish={async () => {
         const ok = await confirm({
           ...(item.published

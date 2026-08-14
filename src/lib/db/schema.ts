@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { blob, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { GOVERNANCE_ROLES } from "@/lib/governance-roles";
+import { ADMIN_ROLES } from "@/lib/auth/roles";
 
 const uuid = () => crypto.randomUUID();
 
@@ -131,6 +132,12 @@ export const adminUsers = sqliteTable("admin_users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
+  /**
+   * RBAC (see `lib/auth/roles.ts`): "master" = all access, "hr" = Lowongan +
+   * Lamaran, "humas" = Berita. Defaults to "master" so the account that predates
+   * this column keeps the access it had.
+   */
+  role: text("role", { enum: ADMIN_ROLES }).notNull().default("master"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

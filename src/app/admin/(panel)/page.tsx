@@ -11,6 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import { useAdmin } from "../_store";
+import { can, ROLE_LABELS } from "@/lib/auth/roles";
 import { getApplicationCv } from "../actions";
 import { parseDbTimestamp } from "@/lib/format-date";
 
@@ -55,16 +56,22 @@ const initialsFromEmail = (email: string) => {
 };
 
 export default function AdminDashboard() {
-  const { news, applications, jobs, adminEmail, loading } = useAdmin();
+  const { news, applications, jobs, adminEmail, role, loading } = useAdmin();
   const published = news.filter((n) => n.published).length;
   const openJobs = jobs.filter((j) => j.isOpen).length;
 
+  // The dashboard is open to every role, but each card belongs to a section —
+  // an HR account sees no berita counts, a Humas account no lamaran counts.
+  const showNews = can(role, "berita");
+  const showJobs = can(role, "lowongan");
+  const showApplications = can(role, "lamaran");
+
   const stats = [
-    { label: "Total Berita", value: news.length, icon: Newspaper, tint: "bg-[rgba(1,74,175,0.14)]", fg: "text-[#014aaf]" },
-    { label: "Berita Publik", value: published, icon: CheckCircle2, tint: "bg-[rgba(54,146,73,0.16)]", fg: "text-[#2f7d3f]" },
-    { label: "Lowongan Dibuka", value: openJobs, icon: Briefcase, tint: "bg-[rgba(185,119,10,0.16)]", fg: "text-[#b9770a]" },
-    { label: "Lamaran Masuk", value: applications.length, icon: FileText, tint: "bg-[rgba(124,58,237,0.15)]", fg: "text-[#7c3aed]" },
-  ];
+    { show: showNews, label: "Total Berita", value: news.length, icon: Newspaper, tint: "bg-[rgba(1,74,175,0.14)]", fg: "text-[#014aaf]" },
+    { show: showNews, label: "Berita Publik", value: published, icon: CheckCircle2, tint: "bg-[rgba(54,146,73,0.16)]", fg: "text-[#2f7d3f]" },
+    { show: showJobs, label: "Lowongan Dibuka", value: openJobs, icon: Briefcase, tint: "bg-[rgba(185,119,10,0.16)]", fg: "text-[#b9770a]" },
+    { show: showApplications, label: "Lamaran Masuk", value: applications.length, icon: FileText, tint: "bg-[rgba(124,58,237,0.15)]", fg: "text-[#7c3aed]" },
+  ].filter((s) => s.show);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -78,7 +85,7 @@ export default function AdminDashboard() {
             the floating menu (hamburger) button instead. */}
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
           <span className="hidden text-right sm:block">
-            <span className="block text-xs text-ink/50">Admin</span>
+            <span className="block text-xs text-ink/50">{ROLE_LABELS[role]}</span>
             <span className="block max-w-[200px] truncate text-sm font-semibold text-[#00224f]">
               {adminEmail || "Admin"}
             </span>
@@ -107,6 +114,7 @@ export default function AdminDashboard() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Recent berita */}
+        {showNews && (
         <section className="glass-rim glass-card rounded-[18px] p-5">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-[#00224f]">Berita Terbaru</h2>
@@ -137,8 +145,10 @@ export default function AdminDashboard() {
             )}
           </ul>
         </section>
+        )}
 
         {/* Recent lamaran */}
+        {showApplications && (
         <section className="glass-rim glass-card rounded-[18px] p-5">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-[#00224f]">Lamaran Terbaru</h2>
@@ -177,6 +187,42 @@ export default function AdminDashboard() {
             )}
           </ul>
         </section>
+        )}
+
+        {/* HR-only panels have no berita list to pair with, so the Lowongan
+            shortcut fills the second column instead. */}
+        {showJobs && !showNews && (
+          <section className="glass-rim glass-card rounded-[18px] p-5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-[#00224f]">Lowongan Terbaru</h2>
+              <Link href="/admin/lowongan" className="inline-flex items-center gap-1 text-sm font-medium text-[#014aaf] hover:underline">
+                Kelola <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-black/5">
+              {loading ? (
+                <li className="grid min-h-[200px] place-items-center text-center text-sm text-ink/45">Memuat…</li>
+              ) : jobs.length === 0 ? (
+                <li className="grid min-h-[200px] place-items-center text-center text-sm text-ink/45">
+                  Belum ada lowongan.
+                </li>
+              ) : (
+                jobs.slice(0, 5).map((j) => (
+                  <li key={j.id} className="flex items-center justify-between gap-3 py-3">
+                    <span className="line-clamp-1 text-sm font-medium text-ink">{j.title}</span>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        j.isOpen ? "bg-[#e6f6ec] text-[#137a37]" : "bg-[#fdf1df] text-[#9a5b00]"
+                      }`}
+                    >
+                      {j.isOpen ? "Dibuka" : "Ditutup"}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+        )}
       </div>
     </div>
   );

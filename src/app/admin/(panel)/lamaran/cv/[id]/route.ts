@@ -1,20 +1,21 @@
 import type { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth/guard";
+import { requireSection } from "@/lib/auth/guard";
 
 /**
- * Admin-only CV download endpoint. The proxy already gates `/admin/:path*`, and
- * `requireAdmin()` re-checks the session as defense-in-depth. Exists mainly so
- * the exported Excel can carry a clickable "Unduh CV" link per applicant (an
- * xlsx can't embed the blob itself).
+ * CV download endpoint for roles that own the Lamaran section (Admin Master and
+ * HR). The proxy already gates `/admin/:path*`, and `requireSection()` re-checks
+ * session + role as defense-in-depth. Exists mainly so the exported Excel can
+ * carry a clickable "Unduh CV" link per applicant (an xlsx can't embed the blob
+ * itself).
  */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireSection("lamaran");
   } catch {
     return new Response("Unauthorized", { status: 401 });
   }

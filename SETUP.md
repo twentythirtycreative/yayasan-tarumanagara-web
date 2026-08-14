@@ -55,13 +55,37 @@ Admin login (`/admin/login`) tervalidasi terhadap tabel `admin_users` di Turso
 (`jose`), rute `/admin/*` dilindungi `src/middleware.ts`.
 
 1. Set `AUTH_SECRET` di `.env.local` (rahasia acak — lihat `.env.example`).
-2. Buat akun admin (bisa diulang untuk reset password):
+2. Tambahkan kolom RBAC `role` pada database yang dibuat sebelum fitur ini
+   (aman dijalankan berulang; akun lama otomatis jadi `master`):
 
 ```bash
-npm run create-admin -- "admin@domain.com" "kata-sandi-kuat"
+npm run migrate:admin-role
 ```
 
-3. Login di `/admin/login`. Tombol **Keluar** menghapus sesi.
+3. Buat akun admin (bisa diulang untuk reset password / ganti role):
+
+```bash
+npm run create-admin -- "admin@domain.com" "kata-sandi-kuat" master
+npm run create-admin -- "hr@domain.com"    "kata-sandi-kuat" hr
+npm run create-admin -- "humas@domain.com" "kata-sandi-kuat" humas
+```
+
+4. Login di `/admin/login`. Tombol **Keluar** menghapus sesi.
+
+### Hak akses (RBAC)
+
+Definisi terpusat di `src/lib/auth/roles.ts`.
+
+| Role | Label | Berita & Kegiatan | Tata Kelola | Lowongan Kerja | Lamaran (CV) |
+| --- | --- | :-: | :-: | :-: | :-: |
+| `master` | Admin Master | ✅ | ✅ | ✅ | ✅ |
+| `hr` | HR | — | — | ✅ | ✅ |
+| `humas` | Humas | ✅ | — | — | — |
+
+Dashboard bisa diakses semua role, tapi kartu & ringkasannya ikut dibatasi.
+Penegakan berlapis: `src/proxy.ts` menjaga navigasi halaman, `requireSection()`
+di `src/lib/auth/guard.ts` menjaga setiap Server Action dan route CV, dan sidebar
+hanya menampilkan menu yang boleh diakses.
 
 ## 6. Deploy ke Vercel
 
