@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   // remote image hosts are needed. Add remotePatterns here if that changes.
   images: {
     remotePatterns: [],
+    // Next 16 requires every `quality` prop to be allowlisted here; anything
+    // unlisted is silently snapped to the nearest allowed value. 75 is the
+    // default, 90 is the unit-selector cards (unit-selector.tsx).
+    qualities: [75, 90],
   },
   experimental: {
     serverActions: {

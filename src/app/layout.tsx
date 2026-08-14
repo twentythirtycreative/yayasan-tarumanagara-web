@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SmoothScroll } from "@/components/smooth-scroll";
@@ -7,12 +7,26 @@ import { siteConfig } from "@/lib/site";
 
 // Figma uses Plus Jakarta Sans throughout, including display headings
 // (Bold / Bold Italic). We load italic + the full weight range.
-const jakarta = Plus_Jakarta_Sans({
+//
+// Self-hosted rather than via next/font/google: Google rotates the hashed
+// fonts.gstatic.com filenames, so a restored Vercel build cache can point at
+// URLs that now 404 and fail the build. These are the latin-subset variable
+// files (wght 200-800), fetched once and committed.
+const jakarta = localFont({
+  src: [
+    {
+      path: "./fonts/PlusJakartaSans-Variable.woff2",
+      weight: "200 800",
+      style: "normal",
+    },
+    {
+      path: "./fonts/PlusJakartaSans-Italic-Variable.woff2",
+      weight: "200 800",
+      style: "italic",
+    },
+  ],
   variable: "--font-sans",
-  subsets: ["latin"],
   display: "swap",
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
