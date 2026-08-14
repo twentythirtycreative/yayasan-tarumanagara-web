@@ -11,7 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import { useAdmin } from "../_store";
-import { can, ROLE_LABELS } from "@/lib/auth/roles";
+import { can, ROLE_LABELS, type AdminRole } from "@/lib/auth/roles";
 import { getApplicationCv } from "../actions";
 import { parseDbTimestamp } from "@/lib/format-date";
 
@@ -48,6 +48,14 @@ const formatShort = (iso: string) => {
   return Number.isNaN(d.getTime()) ? iso : shortDate.format(d);
 };
 
+// "Ringkasan konten & lamaran" is only true for a master — HR sees no berita
+// and Humas no lamaran, so the strapline names what that role actually gets.
+const SUBTITLE: Record<AdminRole, string> = {
+  master: "Ringkasan konten & lamaran.",
+  hr: "Ringkasan lowongan & lamaran.",
+  humas: "Ringkasan berita.",
+};
+
 const initialsFromEmail = (email: string) => {
   const name = email.split("@")[0] ?? "";
   const parts = name.split(/[.\-_]+/).filter(Boolean);
@@ -73,12 +81,33 @@ export default function AdminDashboard() {
     { show: showApplications, label: "Lamaran Masuk", value: applications.length, icon: FileText, tint: "bg-[rgba(124,58,237,0.15)]", fg: "text-[#7c3aed]" },
   ].filter((s) => s.show);
 
+  // Below xl the row is 2-up for everyone, so a short row still fills it. At xl
+  // a master's four cards are (100% - 3*16px)/4 = 276px wide, and hard-coding
+  // xl:grid-cols-4 for a role with two cards would stretch them to double that
+  // — same grid, visibly different card. Narrowing the grid to exactly the span
+  // those N tracks would occupy keeps every role's card 276px, left-aligned
+  // with the panels below: 2 cards = 2*276+16 = calc(50% - 0.5rem), 3 cards =
+  // 3*276+32 = calc(75% - 0.25rem).
+  const statGrid =
+    stats.length >= 4
+      ? "xl:grid-cols-4"
+      : stats.length === 3
+        ? "xl:grid-cols-3 xl:max-w-[calc(75%-0.25rem)]"
+        : "xl:grid-cols-2 xl:max-w-[calc(50%-0.5rem)]";
+
+  // The Lowongan panel is HR's stand-in for the berita list it can't see, so
+  // exactly one of the two ever renders. Counting the panels up front lets a
+  // lone panel (Humas) go full width instead of sitting in a half-empty
+  // two-column row.
+  const showJobsPanel = showJobs && !showNews;
+  const panelCount = [showNews, showApplications, showJobsPanel].filter(Boolean).length;
+
   return (
     <div className="mx-auto max-w-6xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">Dashboard</h1>
-          <p className="mt-1 text-sm text-ink/60">Ringkasan konten &amp; lamaran.</p>
+          <p className="mt-1 text-sm text-ink/60">{SUBTITLE[role]}</p>
         </div>
 
         {/* Admin avatar — hidden on mobile, where the top-right slot is taken by
@@ -86,7 +115,10 @@ export default function AdminDashboard() {
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
           <span className="hidden text-right sm:block">
             <span className="block text-xs text-ink/50">{ROLE_LABELS[role]}</span>
-            <span className="block max-w-[200px] truncate text-sm font-semibold text-[#00224f]">
+            {/* Shown in full, never ellipsed — a half-rendered address is
+                worse than a wide one. nowrap keeps it on one line; the
+                heading block on the left is the one that gives way. */}
+            <span className="block text-sm font-semibold whitespace-nowrap text-[#00224f]">
               {adminEmail || "Admin"}
             </span>
           </span>
@@ -100,7 +132,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="mt-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className={`mt-6 grid grid-cols-2 gap-4 ${statGrid}`}>
         {stats.map((s) => (
           <div key={s.label} className="glass-rim glass-card rounded-[18px] p-5">
             <div className={`glass-rim grid h-11 w-11 place-items-center rounded-xl border border-white/50 backdrop-blur-sm ${s.tint} ${s.fg}`}>
@@ -112,7 +144,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+      <div className={`mt-8 grid gap-6 ${panelCount > 1 ? "lg:grid-cols-2" : ""}`}>
         {/* Recent berita */}
         {showNews && (
         <section className="glass-rim glass-card rounded-[18px] p-5">
@@ -191,7 +223,7 @@ export default function AdminDashboard() {
 
         {/* HR-only panels have no berita list to pair with, so the Lowongan
             shortcut fills the second column instead. */}
-        {showJobs && !showNews && (
+        {showJobsPanel && (
           <section className="glass-rim glass-card rounded-[18px] p-5">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-[#00224f]">Lowongan Terbaru</h2>
