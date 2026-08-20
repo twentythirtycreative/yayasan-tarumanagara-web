@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowUpRight, MapPin } from "lucide-react";
@@ -81,9 +80,11 @@ export function UnitSelector() {
             className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-[8px] lg:flex-nowrap lg:justify-start"
           >
             {activeUnit.cards.map((card) => (
-              <Link
+              /* Not a single card-wide link: each campus line carries its own
+                 map URL (Universitas Tarumanagara has two), and anchors cannot
+                 nest. The pins and the CTA row below are the links. */
+              <div
                 key={card.image}
-                href={`/unit/${activeUnit.slug}`}
                 className="group relative flex w-full flex-col overflow-hidden rounded-[14px] bg-white p-3 sm:w-[249px] lg:w-auto lg:min-w-0 lg:flex-1 lg:basis-0 lg:max-w-[249px]"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-[19px]">
@@ -102,24 +103,34 @@ export function UnitSelector() {
                 {/* Figma 542:1075 — one pin + site line per location. */}
                 <div className="mt-2 flex flex-col gap-[2px] px-5">
                   {card.locations.map((loc) => (
-                    <p
-                      key={loc}
-                      className="flex items-start gap-1 text-meta font-normal leading-[1.4] text-[#262626]"
+                    <a
+                      key={loc.label}
+                      href={loc.map}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-1 text-meta font-normal leading-[1.4] text-[#262626] hover:underline"
                     >
                       <MapPin className="mt-[1px] h-3 w-3 shrink-0" />
-                      {loc}
-                    </p>
+                      {loc.label}
+                    </a>
                   ))}
                 </div>
-                <div className="mt-auto flex items-center justify-between px-5 pt-6 pb-1">
-                  <span className="text-[12px] font-semibold text-[#015ddb]">
+                {/* CTA opens the card's primary location on Google Maps. */}
+                <a
+                  href={card.locations[0].map}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Lihat lokasi ${card.title} di Google Maps`}
+                  className="group/cta mt-auto flex items-center justify-between px-5 pt-6 pb-1"
+                >
+                  <span className="text-[12px] font-semibold text-[#015ddb] group-hover/cta:underline">
                     Pelajari lebih lanjut
                   </span>
                   <span className="glass-rim grid h-9 w-9 shrink-0 place-items-center rounded-[78px] bg-gradient-to-br from-[rgba(237,245,255,0.46)] to-white/0 shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)]">
                     <ArrowUpRight className="h-5 w-5 text-[#015ddb]" />
                   </span>
-                </div>
-              </Link>
+                </a>
+              </div>
             ))}
           </motion.div>
         </AnimatePresence>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { CoverImage } from "@/components/cover-image";
 import { snippet } from "@/components/news-card";
 import { NewsTabs } from "./news-tabs";
 import { NewsGrid } from "./news-grid";
@@ -48,12 +49,11 @@ export default async function BeritaPage() {
             {featured && (
               <div className="mt-10 grid overflow-hidden rounded-[22px] md:grid-cols-[minmax(0,432px)_1fr] md:rounded-[36px]">
                 <div className="relative aspect-[432/351] w-full md:aspect-auto">
-                  <Image
+                  <CoverImage
                     src={featured.coverImageUrl ?? "/images/news-mou.jpg"}
                     alt={featured.title}
-                    fill
                     sizes="432px"
-                    className="object-cover"
+                    preload
                   />
                 </div>
                 <div

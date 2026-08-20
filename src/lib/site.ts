@@ -17,11 +17,21 @@ export const siteConfig = {
   /** Navbar CTA target — Untar admission site (Figma 342:1764 "Daftar Untar"). */
   daftarUntarUrl: "https://go.untar.ac.id/",
   social: {
-    linkedin: "https://www.linkedin.com/",
-    instagram: "https://www.instagram.com/",
-    tiktok: "https://www.tiktok.com/",
-    youtube: "https://www.youtube.com/",
+    linkedin:
+      "https://www.linkedin.com/company/tarumanagara-foundation/?originalSubdomain=id",
+    instagram: "https://www.instagram.com/tarumanagarafoundation/",
+    tiktok: "https://www.tiktok.com/@proudtarumanagara",
+    youtube: "https://www.youtube.com/@tarumanagarafoundation",
   },
+} as const;
+
+/** Google Maps links for the campuses / sites the units sit on. Several units
+ *  share an address, so the URLs are named once here and referenced below. */
+export const mapLinks = {
+  kampus1: "https://maps.app.goo.gl/ZJV71Bpnz5eCwe1F6",
+  kampus2: "https://maps.app.goo.gl/VFnLZEYbXy48jn5f6",
+  kampus3: "https://maps.app.goo.gl/pq8oL9tUMeKkecfN8",
+  royalTaruma: "https://maps.app.goo.gl/z8boLpdi8qWT9xoY9",
 } as const;
 
 export const navLinks = [
@@ -35,7 +45,9 @@ export const navLinks = [
  *  `cards` holds each unit's member institutions (max 3, from Figma). When a
  *  unit has a single card it is left-aligned, not pushed to the right.
  *  `locations` (Figma 542:1075 et al) renders one pin + site line per entry
- *  under the card title — Universitas Tarumanagara is the only card with two. */
+ *  under the card title — Universitas Tarumanagara is the only card with two.
+ *  Each location carries the Google Maps link for that site; the card's
+ *  "Pelajari lebih lanjut" button opens the first one. */
 export const units = [
   {
     slug: "pendidikan",
@@ -44,17 +56,20 @@ export const units = [
       {
         title: "Universitas Tarumanagara",
         image: "/images/units/untar.png",
-        locations: ["Kampus 1: Letjen S Parman", "Kampus 2: Tj Duren"],
+        locations: [
+          { label: "Kampus 1: Letjen S Parman", map: mapLinks.kampus1 },
+          { label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 },
+        ],
       },
       {
         title: "Tarumanagara Xinya College",
         image: "/images/units/xinya.png",
-        locations: ["Kampus 2: Tj Duren"],
+        locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
       {
         title: "Institut Tarumanagara",
         image: "/images/units/itaru.png",
-        locations: ["Kampus 3: Cilandak"],
+        locations: [{ label: "Kampus 3: Cilandak", map: mapLinks.kampus3 }],
       },
     ],
   },
@@ -65,12 +80,12 @@ export const units = [
       {
         title: "Rumah Sakit Royal Taruma",
         image: "/images/units/royal-taruma.png",
-        locations: ["RS Royal Taruma"],
+        locations: [{ label: "RS Royal Taruma", map: mapLinks.royalTaruma }],
       },
       {
         title: "PT Taruma Bhakti Medika",
         image: "/images/units/bhakti-medika.png",
-        locations: ["RS Royal Taruma"],
+        locations: [{ label: "RS Royal Taruma", map: mapLinks.royalTaruma }],
       },
     ],
   },
@@ -81,7 +96,7 @@ export const units = [
       {
         title: "Tarumanagara Enterprise",
         image: "/images/units/enterprise.png",
-        locations: ["Kampus 1: Letjen S Parman"],
+        locations: [{ label: "Kampus 1: Letjen S Parman", map: mapLinks.kampus1 }],
       },
     ],
   },
@@ -92,7 +107,7 @@ export const units = [
       {
         title: "PT Taruma Bhakti Usaha",
         image: "/images/units/bhakti-usaha.png",
-        locations: ["Kampus 2: Tj Duren"],
+        locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
     ],
   },
@@ -103,7 +118,7 @@ export const units = [
       {
         title: "Untar Residence",
         image: "/images/units/untar-residence.png",
-        locations: ["Kampus 2: Tj Duren"],
+        locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
     ],
   },

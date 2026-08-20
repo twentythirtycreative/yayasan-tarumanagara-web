@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { siteConfig } from "@/lib/site";
+import { mapLinks, siteConfig } from "@/lib/site";
 
 // Social icons exported from Figma (footer node 332:962). The PNGs are alpha
 // masks, tinted #f5f5f5 via CSS mask so they match the design exactly.
@@ -11,28 +11,31 @@ const socials = [
   { label: "YouTube", href: siteConfig.social.youtube, icon: "/images/social/youtube.png" },
 ];
 
-// Figma 332:961 — "Ekosistem" column. Spellings follow the design.
-// TODO: replace the "#" placeholders with each institution's real site.
+// Figma 332:961 — "Ekosistem" column. The design spells these "Tarumanegara";
+// corrected to "Tarumanagara" here at the client's request.
+// Only Untar has a site of its own; the rest point at their campus on Google
+// Maps, per the client's link list.
 const ekosistem = [
   { label: "Untar", href: "https://untar.ac.id" },
-  { label: "Tarumanegara Xinya College", href: "#" },
-  { label: "Institut Tarumanegara", href: "#" },
-  { label: "Taruma Enterprise", href: "#" },
+  { label: "Tarumanagara Xinya College", href: mapLinks.kampus2 },
+  { label: "Institut Tarumanagara", href: mapLinks.kampus3 },
+  { label: "Taruma Enterprise", href: mapLinks.kampus1 },
 ];
 
 // Figma 543:8429 — "Alamat" column, rendered as two sub-columns. The second
 // has no heading; it starts level with the first link of column one.
-// TODO: point these at the real map / detail links.
+// Kampus 4 is in the design but the client's address list only covers campuses
+// 1-3, so it stays a placeholder until they supply one.
 const alamat = [
   [
-    { label: "Kampus 1", href: "#" },
-    { label: "Kampus 2", href: "#" },
-    { label: "Kampus 3", href: "#" },
+    { label: "Kampus 1", href: mapLinks.kampus1 },
+    { label: "Kampus 2", href: mapLinks.kampus2 },
+    { label: "Kampus 3", href: mapLinks.kampus3 },
     { label: "Kampus 4", href: "#" },
   ],
   [
-    { label: "RS Royal Taruma", href: "#" },
-    { label: "Untar Residence", href: "#" },
+    { label: "RS Royal Taruma", href: mapLinks.royalTaruma },
+    { label: "Untar Residence", href: mapLinks.kampus2 },
   ],
 ];
 
@@ -133,6 +136,9 @@ export function Footer() {
                   <a
                     key={item.label}
                     href={item.href}
+                    {...(item.href.startsWith("http")
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
                     className={`${footerLink} whitespace-nowrap`}
                   >
                     {item.label}

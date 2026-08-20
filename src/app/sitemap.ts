@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { siteConfig, units } from "@/lib/site";
+import { siteConfig } from "@/lib/site";
 import { getPublishedNews } from "@/lib/data/news";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -14,13 +14,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/berita`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
   ];
 
-  const unitRoutes: MetadataRoute.Sitemap = units.map((u) => ({
-    url: `${base}/unit/${u.slug}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: 0.6,
-  }));
-
   let newsRoutes: MetadataRoute.Sitemap = [];
   try {
     const news = await getPublishedNews();
@@ -31,8 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch {
-    // DB unavailable at build — ship the static + unit routes.
+    // DB unavailable at build — ship the static routes.
   }
 
-  return [...staticRoutes, ...unitRoutes, ...newsRoutes];
+  return [...staticRoutes, ...newsRoutes];
 }

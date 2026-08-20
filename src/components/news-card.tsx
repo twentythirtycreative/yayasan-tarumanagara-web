@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { CoverImage } from "@/components/cover-image";
 
 export type NewsCardData = {
   slug: string;
@@ -23,7 +23,14 @@ export function snippet(text: string | null | undefined, max = 200): string {
 // panel (rgba(118,118,118,.16) + blur) that overlaps the bottom of the image
 // and holds the title, dated excerpt, tag row and a "Baca Selengkapnya" pill.
 // The card lifts (larger shadow) on hover.
-export function NewsCard({ item }: { item: NewsCardData }) {
+export function NewsCard({
+  item,
+  eager = false,
+}: {
+  item: NewsCardData;
+  /** Set on the cards visible without scrolling so they skip lazy-loading. */
+  eager?: boolean;
+}) {
   return (
     <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-[22px] bg-[#00224f] text-[#f5f5f5] shadow-[0px_10px_24px_rgba(0,0,0,0.14)] transition-shadow duration-500 hover:shadow-[0px_14px_28px_rgba(0,0,0,0.18)]">
       <Link
@@ -31,12 +38,12 @@ export function NewsCard({ item }: { item: NewsCardData }) {
         className="relative block aspect-[472/300] w-full overflow-hidden"
       >
         {item.coverImageUrl ? (
-          <Image
+          <CoverImage
             src={item.coverImageUrl}
             alt={item.title}
-            fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            eager={eager}
+            className="transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="grid h-full place-items-center bg-[#001a3c] text-sm text-white/40">

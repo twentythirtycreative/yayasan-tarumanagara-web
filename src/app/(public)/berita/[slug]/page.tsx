@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Calendar, ChevronLeft, User } from "lucide-react";
 import { NewsTabs } from "../news-tabs";
 import { ShareButton } from "./share-button";
+import { CoverImage } from "@/components/cover-image";
 import { snippet } from "@/components/news-card";
 import { getNewsBySlug, getPublishedNews } from "@/lib/data/news";
 import { siteConfig } from "@/lib/site";
@@ -138,12 +139,11 @@ export default async function BeritaDetailPage({
 
             {item.coverImageUrl && (
               <div className="relative mt-10 aspect-[863/447] w-full overflow-hidden">
-                <Image
+                <CoverImage
                   src={item.coverImageUrl}
                   alt={item.title}
-                  fill
                   sizes="840px"
-                  className="object-cover"
+                  preload
                 />
               </div>
             )}

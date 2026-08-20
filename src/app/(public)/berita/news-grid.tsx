@@ -18,7 +18,9 @@ export function NewsGrid({ items }: { items: NewsCardData[] }) {
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((item, i) => (
           <Reveal key={item.slug} className="h-full" delay={(i % 3) * 0.06}>
-            <NewsCard item={item} />
+            {/* First row sits above the fold; the rest stay lazy. Not
+                `preload` — which card is the LCP depends on the viewport. */}
+            <NewsCard item={item} eager={i < 3} />
           </Reveal>
         ))}
       </div>
