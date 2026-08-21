@@ -5,7 +5,7 @@ export const siteConfig = {
   /** Canonical site origin (no trailing slash). Set NEXT_PUBLIC_SITE_URL in prod. */
   url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tarumanagara.org").replace(/\/$/, ""),
   description:
-    "Yayasan Tarumanagara — Membangun Nilai, Menginspirasi Masa Depan. Informasi lembaga, unit usaha, berita, kegiatan, dan karir.",
+    "Yayasan Tarumanagara: Lembaga nirlaba sejak 1959 yang berdedikasi melayani masyarakat di bidang pendidikan, kesehatan, dan pengabdian.",
   ogImage: "/images/og.jpg",
   foundationLabel: "Tarumanagara Foundation 2026©",
   /** Street address, one line (used for schema.org markup). */
