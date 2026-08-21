@@ -6,7 +6,13 @@ export const siteConfig = {
   url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tarumanagara.org").replace(/\/$/, ""),
   description:
     "Yayasan Tarumanagara: Lembaga nirlaba sejak 1959 yang berdedikasi melayani masyarakat di bidang pendidikan, kesehatan, dan pengabdian.",
-  ogImage: "/images/og.jpg",
+  /**
+   * Share-card image (1200x630). The filename carries a version because Meta
+   * caches a preview image by its URL: republishing different bytes at the same
+   * path leaves WhatsApp showing the copy it already has, no matter how many
+   * times the page URL is busted with a query string.
+   */
+  ogImage: "/images/og-hero.jpg",
   foundationLabel: "Tarumanagara Foundation 2026©",
   /** Street address, one line (used for schema.org markup). */
   address:
