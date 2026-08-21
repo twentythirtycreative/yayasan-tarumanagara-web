@@ -8,8 +8,20 @@ export const siteConfig = {
     "Yayasan Tarumanagara — Membangun Nilai, Menginspirasi Masa Depan. Informasi lembaga, unit usaha, berita, kegiatan, dan karir.",
   ogImage: "/images/og.jpg",
   foundationLabel: "Tarumanagara Foundation 2026©",
+  /** Street address, one line (used for schema.org markup). */
   address:
-    "Jl. Letjen S. Parman No.1 3, RT.3/RW.8, Tomang, Kec. Grogol petamburan, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11440",
+    "Jl. Letjen S. Parman No.1, RT.6/RW.16, Tomang, Kec. Grogol petamburan, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11470",
+  /** Same address broken the way the client wants it stacked in the footer. */
+  addressLines: [
+    "Jl. Letjen S. Parman No.1, RT.6/RW.16",
+    "Tomang, Kec. Grogol petamburan, Kota Jakarta Barat",
+    "Daerah Khusus Ibukota Jakarta 11470",
+  ],
+  /** Where the foundation itself sits on that address. */
+  office: "Kampus I Universitas Tarumanagara Gedung Utama Lantai 2",
+  /** Footer "Jam Operasional" column. */
+  hours: { days: "Senin – Jumat", time: "(08.00-16.45)" },
+  phone: "(021) 5695-8728",
   /** Footer blurb (Figma 332:951) — replaces the address block in the footer. */
   footerAbout:
     "Yayasan Tarumanagara adalah lembaga nirlaba yang didirikan pada 18 Juni 1959. Yayasan ini berfokus pada pelayanan masyarakat di bidang pendidikan, kesehatan, dan pengabdian",
