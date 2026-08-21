@@ -52,7 +52,11 @@ export const metadata: Metadata = {
   authors: [{ name: siteConfig.name }],
   creator: siteConfig.name,
   publisher: siteConfig.name,
-  alternates: { canonical: "/" },
+  // No `alternates` here on purpose: metadata is inherited field by field, so a
+  // canonical set on the root layout is handed to every page that doesn't
+  // declare its own — pointing them all at the homepage. Each public page sets
+  // its own via `pageMetadata` (lib/seo.ts).
+  //
   // Favicon package in /public/favicon (realfavicongenerator). The root
   // /favicon.ico is served via the app/favicon.ico convention.
   manifest: "/favicon/site.webmanifest",

@@ -1,16 +1,17 @@
 import Image from "next/image";
-import type { Metadata } from "next";
 import { SectionHero } from "@/components/sections/section-hero";
 import { Reveal } from "@/components/motion/reveal";
 import { GovernanceTabs } from "./governance-tabs";
 import { getGovernanceMembers } from "@/lib/data/governance";
 import { SejarahBand } from "./sejarah-band";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Tentang Kami",
   description:
     "Sejarah, visi, misi, dan tata kelola Yayasan Tarumanagara sejak 1959.",
-};
+  path: "/tentang-kami",
+});
 
 const heading = "text-header font-extrabold";
 

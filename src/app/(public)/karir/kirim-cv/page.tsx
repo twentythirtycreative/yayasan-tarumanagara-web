@@ -1,11 +1,16 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import { SectionHero } from "@/components/sections/section-hero";
 import { Reveal } from "@/components/motion/reveal";
 import { getOpenJobs } from "@/lib/data/jobs";
 import { CvForm } from "./cv-form";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Kirim CV" };
+export const metadata = pageMetadata({
+  title: "Kirim CV",
+  description:
+    "Kirimkan CV Anda ke Yayasan Tarumanagara dan lamar posisi yang sedang dibuka.",
+  path: "/karir/kirim-cv",
+});
 // Held until an admin write invalidates the "jobs" tag — see lib/cache.ts.
 export const revalidate = false;
 

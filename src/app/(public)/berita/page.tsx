@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CoverImage } from "@/components/cover-image";
@@ -6,12 +5,14 @@ import { snippet } from "@/components/news-card";
 import { NewsTabs } from "./news-tabs";
 import { NewsGrid } from "./news-grid";
 import { getPublishedNews } from "@/lib/data/news";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Berita & Kegiatan",
   description:
     "Ikuti berbagai informasi terbaru, kegiatan, kolaborasi, dan pencapaian Yayasan Tarumanagara.",
-};
+  path: "/berita",
+});
 
 // Held until an admin write invalidates the "news" tag — see lib/cache.ts.
 export const revalidate = false;

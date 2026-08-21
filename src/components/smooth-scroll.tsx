@@ -19,6 +19,11 @@ export function SmoothScroll() {
       duration: 1.15,
       easing: (t) => 1 - Math.pow(1 - t, 3), // easeOutCubic — gentle glide
       smoothWheel: true,
+      // Drop any in-flight inertia the moment a link to another page is
+      // clicked. Without it, a nav click during the ~1.15s glide leaves Lenis
+      // mid-animation: it keeps writing its own offset, so the router's
+      // scroll-to-top is overwritten and the new page opens part-way down.
+      stopInertiaOnNavigate: true,
     });
 
     let raf = 0;

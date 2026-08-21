@@ -40,21 +40,27 @@ export function SectionHero({
 
       <div className="relative z-10 flex h-full items-center justify-center px-6">
         {/* Staggered title group. `--fs` drives font size; the em-based offsets
-            (1.696em ≈ 78px, 1.087em ≈ 50px at 46px) scale with it. */}
-        <div
+            (1.696em ≈ 78px, 1.087em ≈ 50px at 46px) scale with it.
+
+            This is the page's <h1> — the two lines are one heading, split into
+            block spans. Purely a tag swap: Tailwind's preflight gives h1
+            `font-size: inherit; font-weight: inherit` and zeroes every margin,
+            and `block` restores what <p> gave the lines, so it renders
+            identically to the div/p markup it replaces. */}
+        <h1
           className="relative w-fit [--fs:clamp(1.55rem,5.4vw,45.954px)]"
           style={{ fontSize: "var(--fs)" }}
         >
-          <p className="leading-[1.087] font-medium whitespace-nowrap text-[#fafafa]">
+          <span className="block leading-[1.087] font-medium whitespace-nowrap text-[#fafafa]">
             {line1}
-          </p>
-          <p
+          </span>
+          <span
             style={{ marginLeft: line2Indent }}
-            className="-mb-[0.22em] bg-gradient-to-r from-[#fafafa] from-[31%] to-[#949494] bg-clip-text pb-[0.22em] leading-[1.087] font-extrabold whitespace-nowrap text-transparent"
+            className="-mb-[0.22em] block bg-gradient-to-r from-[#fafafa] from-[31%] to-[#949494] bg-clip-text pb-[0.22em] leading-[1.087] font-extrabold whitespace-nowrap text-transparent"
           >
             {line2}
-          </p>
-        </div>
+          </span>
+        </h1>
       </div>
     </section>
   );

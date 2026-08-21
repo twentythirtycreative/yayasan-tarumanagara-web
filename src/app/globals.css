@@ -245,10 +245,19 @@
   html.lenis body {
     height: auto;
   }
-  .lenis.lenis-smooth {
+  /* While Lenis is mounted it owns the scroll position, so the native smooth
+     behaviour set on `html` above has to be off.
+
+     Keyed on `.lenis`, NOT `.lenis-smooth`: since Lenis 1.1 that second class
+     is only on <html> *while a smooth scroll is in flight*, so this guard never
+     applied at rest. `scroll-behavior: smooth` therefore survived, which turned
+     the router's scroll-to-top on navigation into a native ANIMATION — and
+     Lenis's rAF loop wrote its own cached offset back on the next frame,
+     cancelling it. Clicking a navbar link left the new page mid-scroll. */
+  html.lenis {
     scroll-behavior: auto !important;
   }
-  .lenis.lenis-smooth [data-lenis-prevent] {
+  .lenis [data-lenis-prevent] {
     overscroll-behavior: contain;
   }
   .lenis.lenis-stopped {

@@ -46,8 +46,12 @@ export async function generateMetadata({
     title: item.title,
     description,
     alternates: { canonical: `/berita/${item.slug}` },
+    // A page's `openGraph` replaces the root layout's outright rather than
+    // merging into it, so siteName/locale have to be repeated here.
     openGraph: {
       type: "article",
+      locale: "id_ID",
+      siteName: siteConfig.name,
       url,
       title: item.title,
       description,

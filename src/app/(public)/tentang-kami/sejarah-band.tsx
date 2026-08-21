@@ -186,12 +186,18 @@ export function SejarahBand() {
   // smooth scroll goes out immediately for the motion, and a plain jump
   // afterwards puts it exactly on target. Once the smooth pass has landed the
   // jump has nothing left to move and nobody sees it.
-  const first = useRef(true);
+  // Guard on the PREVIOUS value of `open`, not a boolean "have I run once" flag.
+  // A `first.current` flag is not Strict-Mode safe: React dev-remounts the
+  // component (effect → cleanup → effect) while the ref survives, so the second
+  // pass sailed through the guard and scrolled the page down to this section the
+  // moment /tentang-kami opened. Comparing values makes that re-run a no-op —
+  // `open` hasn't changed — while every real open/swap/close still scrolls.
+  const prevOpen = useRef<Topic | null | undefined>(undefined);
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    const previous = prevOpen.current;
+    if (previous === open) return;
+    prevOpen.current = open;
+    if (previous === undefined) return; // first render: nothing was opened yet
     const el = sectionRef.current;
     if (!el) return;
     // scroll-mt on the <section> is the single source of truth for the offset.

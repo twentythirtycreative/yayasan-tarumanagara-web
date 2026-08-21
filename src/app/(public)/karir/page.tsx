@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHero } from "@/components/sections/section-hero";
 import { Reveal } from "@/components/motion/reveal";
 import { getOpenJobs, type JobListing } from "@/lib/data/jobs";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Karir",
   description:
     "Bangun karier bersama Yayasan Tarumanagara. Temukan peluang di lingkungan yang menjunjung integritas, kolaborasi, dan inovasi.",
-};
+  path: "/karir",
+});
 
 // Held until an admin write invalidates the "jobs" tag — see lib/cache.ts.
 export const revalidate = false;

@@ -7,6 +7,12 @@ import { UnitSelector } from "@/components/sections/unit-selector";
 import { SambutanCard } from "@/components/sections/sambutan-card";
 import { getPublishedNews } from "@/lib/data/news";
 import { siteConfig } from "@/lib/site";
+import type { Metadata } from "next";
+
+// The root layout already describes the homepage — its default title, the site
+// description and the shared OG card are all written for this page. Only the
+// canonical URL has to be declared here, now that it is no longer set globally.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const organizationLd = {
   "@context": "https://schema.org",
