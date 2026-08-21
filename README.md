@@ -67,6 +67,28 @@ $env:DOTENV_FILE=".env.production.local"; npm run db:push
 DOTENV_FILE=.env.production.local npm run db:push
 ```
 
+Script `.cjs` di `scripts/` memakai flag `--prod` untuk hal yang sama:
+
+```bash
+npm run create-admin -- "admin@domain.com" "kata-sandi" master --prod
+```
+
+## Menyiapkan DB prod dari DB dev
+
+Buat database kosong di Turso (dashboard atau `turso db create yayasan-tarumanagara-prod`),
+isi `.env.production.local` dengan URL + token-nya, lalu salin seluruh isi DB dev
+— schema apa adanya beserta semua baris, termasuk `admin_users` dengan hash
+password-nya:
+
+```bash
+npm run db:clone -- --dry-run   # lihat dulu apa yang akan disalin
+npm run db:clone                # .env.development.local → .env.production.local
+```
+
+Script menolak jalan bila DB tujuan sudah berisi tabel (pakai `--force` untuk
+menimpa) atau bila kedua env file menunjuk database yang sama, dan mencocokkan
+jumlah baris di akhir.
+
 ## Perintah npm
 
 | Perintah | Fungsi |
@@ -77,7 +99,8 @@ DOTENV_FILE=.env.production.local npm run db:push
 | `npm run db:push` | Terapkan schema Drizzle ke Turso |
 | `npm run db:generate` / `db:migrate` | Migrasi berbasis file (opsional) |
 | `npm run db:studio` | Drizzle Studio |
-| `npm run create-admin -- "<email>" "<password>" [master\|hr\|humas]` | Buat / reset akun admin (role default `master`) |
+| `npm run db:clone` | Salin seluruh DB (schema + semua baris) dev → prod |
+| `npm run create-admin -- "<email>" "<password>" [master\|hr\|humas] [--prod]` | Buat / reset akun admin (role default `master`) |
 | `npm run migrate:admin-role` | Tambah kolom RBAC `role` ke `admin_users` (idempoten) |
 
 ## Struktur singkat

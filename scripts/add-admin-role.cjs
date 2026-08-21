@@ -1,6 +1,9 @@
 // Add the RBAC `role` column to admin_users (idempotent).
-// Usage: npm run migrate:admin-role
-require("dotenv").config({ path: ".env.local" });
+// Usage: npm run migrate:admin-role [-- --prod]
+const isProd = process.argv.includes("--prod");
+require("dotenv").config({
+  path: isProd ? ".env.production.local" : ".env.development.local",
+});
 const { createClient } = require("@libsql/client");
 
 (async () => {

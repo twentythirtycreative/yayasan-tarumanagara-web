@@ -1,13 +1,19 @@
 // Create (or reset the password / role of) an admin user in Turso.
-// Usage: npm run create-admin -- <email> <password> [role]
+// Usage: npm run create-admin -- <email> <password> [role] [--prod]
 //   role: master (default, all access) | hr (lowongan + lamaran) | humas (berita)
-require("dotenv").config({ path: ".env.local" });
+//   --prod: target the prod DB (.env.production.local) instead of dev
+const isProd = process.argv.includes("--prod");
+require("dotenv").config({
+  path: isProd ? ".env.production.local" : ".env.development.local",
+});
 const { createClient } = require("@libsql/client");
 const { randomBytes, scryptSync, randomUUID } = require("crypto");
 
 const ROLES = ["master", "hr", "humas"];
 
-const [, , emailArg, passwordArg, roleArg = "master"] = process.argv;
+const [emailArg, passwordArg, roleArg = "master"] = process.argv
+  .slice(2)
+  .filter((a) => !a.startsWith("--"));
 if (!emailArg || !passwordArg) {
   console.error(
     'Usage: npm run create-admin -- "<email>" "<password>" [master|hr|humas]',
@@ -49,7 +55,9 @@ const passwordHash = `${salt.toString("hex")}:${hash.toString("hex")}`;
       args: [randomUUID(), email, passwordHash, role],
     },
   ]);
-  console.log(`✅ Admin siap: ${email} (role: ${role})`);
+  console.log(
+    `✅ Admin siap: ${email} (role: ${role}) di DB ${isProd ? "PROD" : "dev"}`,
+  );
 })().catch((e) => {
   console.error("❌ Gagal:", e.message);
   process.exit(1);
