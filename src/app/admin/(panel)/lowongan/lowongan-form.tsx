@@ -161,7 +161,6 @@ export function LowonganForm({ initial }: { initial?: AdminJob }) {
               revalidate({ desc: e.target.value });
             }}
             rows={5}
-            data-lenis-prevent
             aria-invalid={Boolean(errors.desc)}
             className={cn(errors.desc ? fieldErr : field, "resize-y leading-relaxed")}
             placeholder="Deskripsi singkat tanggung jawab posisi…"

@@ -7,6 +7,7 @@ import type {
   AdminGovernanceMember,
   AdminJob,
   AdminNews,
+  AdminNewsCategory,
   Application,
 } from "./types";
 
@@ -14,14 +15,23 @@ export type {
   AdminGovernanceMember,
   AdminJob,
   AdminNews,
+  AdminNewsCategory,
   Application,
   GovernanceRole,
 } from "./types";
-export { NEWS_TAGS, GOVERNANCE_ROLES, slugify, shortId } from "./types";
+export {
+  NEWS_TAGS,
+  ALL_NEWS_TAB_LABEL,
+  GOVERNANCE_ROLES,
+  slugify,
+  shortId,
+} from "./types";
 export { can, ROLE_LABELS, type AdminRole } from "@/lib/auth/roles";
 
 type Store = {
   news: AdminNews[];
+  /** The tabs on /berita, in display order. */
+  newsCategories: AdminNewsCategory[];
   jobs: AdminJob[];
   applications: Application[];
   adminEmail: string;
@@ -32,6 +42,9 @@ type Store = {
   deleteNews: (id: string) => Promise<void>;
   togglePublish: (id: string) => Promise<void>;
   getNews: (id: string) => AdminNews | undefined;
+  saveNewsCategory: (c: AdminNewsCategory) => Promise<void>;
+  deleteNewsCategory: (id: string) => Promise<void>;
+  moveNewsCategory: (id: string, direction: -1 | 1) => Promise<void>;
   saveJob: (j: AdminJob) => Promise<void>;
   deleteJob: (id: string) => Promise<void>;
   toggleJobOpen: (id: string) => Promise<void>;
@@ -55,6 +68,7 @@ export function AdminStoreProvider({
   children: ReactNode;
 }) {
   const [news, setNews] = useState<AdminNews[]>([]);
+  const [newsCategories, setNewsCategories] = useState<AdminNewsCategory[]>([]);
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [governance, setGovernance] = useState<AdminGovernanceMember[]>([]);
@@ -64,7 +78,7 @@ export function AdminStoreProvider({
   useEffect(() => {
     let active = true;
     (async () => {
-      // allSettled, not all: these five are independent, and with Promise.all a
+      // allSettled, not all: these are independent, and with Promise.all a
       // single rejection left every section empty — the whole panel looked blank
       // because one query failed. Each list now fails on its own.
       //
@@ -72,8 +86,9 @@ export function AdminStoreProvider({
       // would reject it server-side, and that rejection is expected, not a
       // fault worth logging.
       const skip = Promise.resolve([]);
-      const [n, j, a, g, me] = await Promise.allSettled([
+      const [n, nc, j, a, g, me] = await Promise.allSettled([
         can(role, "berita") ? api.listNews() : skip,
+        can(role, "berita") ? api.listNewsCategories() : skip,
         can(role, "lowongan") ? api.listJobs() : skip,
         can(role, "lamaran") ? api.listApplications() : skip,
         can(role, "tata-kelola") ? api.listGovernanceMembers() : skip,
@@ -91,6 +106,7 @@ export function AdminStoreProvider({
       };
 
       apply("berita", n, setNews);
+      apply("kategori berita", nc, setNewsCategories);
       apply("lowongan", j, setJobs);
       apply("lamaran", a, setApplications);
       apply("tata kelola", g, setGovernance);
@@ -106,6 +122,7 @@ export function AdminStoreProvider({
 
   const store: Store = {
     news,
+    newsCategories,
     jobs,
     applications,
     adminEmail,
@@ -135,6 +152,37 @@ export function AdminStoreProvider({
       );
     },
     getNews: (id) => news.find((x) => x.id === id),
+    saveNewsCategory: async (c) => {
+      const res = await api.saveNewsCategory(c);
+      if (res?.error) throw new Error(res.error);
+      setNewsCategories((prev) =>
+        prev.some((x) => x.id === c.id)
+          ? prev.map((x) => (x.id === c.id ? c : x))
+          : // A new category is appended server-side, so append here too — its
+            // sortOrder is the length of the list it was added to.
+            [...prev, { ...c, sortOrder: prev.length }],
+      );
+    },
+    deleteNewsCategory: async (id) => {
+      await api.deleteNewsCategory(id);
+      setNewsCategories((prev) => prev.filter((x) => x.id !== id));
+      // The action un-files every article in the category; mirror that locally
+      // so the Berita list doesn't keep showing a tab that no longer exists.
+      setNews((prev) =>
+        prev.map((x) => (x.categoryId === id ? { ...x, categoryId: "" } : x)),
+      );
+    },
+    moveNewsCategory: async (id, direction) => {
+      const order = await api.moveNewsCategory(id, direction);
+      if (order === null) {
+        setNewsCategories((prev) => prev.filter((x) => x.id !== id));
+        return;
+      }
+      const rank = new Map(order.map((categoryId, i) => [categoryId, i]));
+      setNewsCategories((prev) =>
+        prev.map((x) => (rank.has(x.id) ? { ...x, sortOrder: rank.get(x.id)! } : x)),
+      );
+    },
     saveJob: async (j) => {
       await api.saveJob(j);
       setJobs((prev) =>

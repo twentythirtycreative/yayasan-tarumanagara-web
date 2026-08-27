@@ -2,9 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { CoverImage } from "@/components/cover-image";
 import { snippet } from "@/components/news-card";
-import { NewsTabs } from "./news-tabs";
-import { NewsGrid } from "./news-grid";
-import { getPublishedNews } from "@/lib/data/news";
+import { NewsBrowser } from "./news-browser";
+import { getNewsCategories, getPublishedNews } from "@/lib/data/news";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
@@ -18,7 +17,10 @@ export const metadata = pageMetadata({
 export const revalidate = false;
 
 export default async function BeritaPage() {
-  const news = await getPublishedNews();
+  const [news, categories] = await Promise.all([
+    getPublishedNews(),
+    getNewsCategories(),
+  ]);
   const featured = news[0];
 
   return (
@@ -96,24 +98,9 @@ export default async function BeritaPage() {
         </div>
       </section>
 
-      {/* Tab bar (Figma 298:1190) — clickable tabs. Pulled up so the glass box
-          above tucks slightly UNDER the blue bar. */}
-      <div className="relative z-20 -mt-6">
-        <NewsTabs />
-      </div>
-
-      {/* News grid */}
-      <section className="bg-surface py-16 sm:py-20">
-        <div className="site-container">
-          {news.length === 0 ? (
-            <p className="py-10 text-center text-body font-medium text-ink/50">
-              Belum ada berita yang dipublikasikan. Silakan cek kembali nanti.
-            </p>
-          ) : (
-            <NewsGrid items={news} />
-          )}
-        </div>
-      </section>
+      {/* Tab bar + the grid it filters — "Semua Berita" plus one tab per row of
+          `news_categories`. */}
+      <NewsBrowser items={news} categories={categories} />
     </>
   );
 }

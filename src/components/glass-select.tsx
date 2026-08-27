@@ -100,10 +100,7 @@ export function GlassSelect({
               />
             </div>
           )}
-          <ul
-            data-lenis-prevent-wheel
-            className="max-h-56 overflow-y-auto py-1"
-          >
+          <ul className="max-h-56 overflow-y-auto py-1">
             {filtered.map((o) => (
               <li key={o.value}>
                 <button

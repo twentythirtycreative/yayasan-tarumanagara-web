@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Search, MoreVertical, ImageOff, Link2, Tags } from "lucide-react";
 import { FilterMenu } from "../filter-menu";
 import { useAnchoredMenu } from "../use-anchored-menu";
 import { cn } from "@/lib/utils";
@@ -207,10 +207,17 @@ function NewsRowActions({ item }: { item: NewsItem }) {
   );
 }
 
+// Filter value standing in for "no category at all" — categories are rows now,
+// so their absence needs a key of its own.
+const NO_CATEGORY = "__none__";
+
 export default function AdminBeritaList() {
-  const { news, loading } = useAdmin();
+  const { news, newsCategories, loading } = useAdmin();
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<Record<string, string[]>>({ status: [] });
+  const [selected, setSelected] = useState<Record<string, string[]>>({
+    status: [],
+    kategori: [],
+  });
 
   const toggleFilter = (key: string, value: string) =>
     setSelected((prev) => {
@@ -220,14 +227,22 @@ export default function AdminBeritaList() {
         [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
       };
     });
-  const resetFilter = () => setSelected({ status: [] });
+  const resetFilter = () => setSelected({ status: [], kategori: [] });
+
+  const ordered = [...newsCategories].sort(
+    (a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name),
+  );
+  const categoryName = (id: string) => ordered.find((c) => c.id === id)?.name;
 
   const statusFilter = selected.status ?? [];
+  const categoryFilter = selected.kategori ?? [];
   const filtered = news.filter((n) => {
     const status = n.published ? "published" : "draft";
     return (
       n.title.toLowerCase().includes(q.trim().toLowerCase()) &&
-      (statusFilter.length === 0 || statusFilter.includes(status))
+      (statusFilter.length === 0 || statusFilter.includes(status)) &&
+      (categoryFilter.length === 0 ||
+        categoryFilter.includes(n.categoryId || NO_CATEGORY))
     );
   });
 
@@ -238,14 +253,25 @@ export default function AdminBeritaList() {
           <h1 className="text-[clamp(2rem,3.2vw,2.75rem)] font-extrabold leading-[1.1] text-[#00224f]">Berita &amp; Kegiatan</h1>
           <p className="mt-1 text-sm text-ink/60">Kelola, publikasikan, dan sunting artikel.</p>
         </div>
-        <Link
-          href="/admin/berita/baru"
-          aria-label="Tambah Berita"
-          className="glass-rim inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Tambah Berita</span>
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/admin/berita/kategori"
+            aria-label="Kelola Kategori"
+            title="Kelola Kategori"
+            className="glass-rim glass-btn inline-flex h-11 w-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-[#014aaf] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
+          >
+            <Tags className="h-4 w-4" />
+            <span className="hidden sm:inline">Kategori</span>
+          </Link>
+          <Link
+            href="/admin/berita/baru"
+            aria-label="Tambah Berita"
+            className="glass-rim inline-flex h-11 w-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#00357d] to-[#0060e3] text-sm font-semibold text-[#f5f5f5] shadow-[0px_4px_13.8px_rgba(0,0,0,0.12)] transition-transform hover:scale-[1.03] sm:w-auto sm:px-5"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Tambah Berita</span>
+          </Link>
+        </div>
       </div>
 
       {/* Search + filter */}
@@ -267,6 +293,14 @@ export default function AdminBeritaList() {
               options: [
                 { value: "published", label: "Publik" },
                 { value: "draft", label: "Draf" },
+              ],
+            },
+            {
+              key: "kategori",
+              label: "Kategori",
+              options: [
+                ...ordered.map((c) => ({ value: c.id, label: c.name })),
+                { value: NO_CATEGORY, label: "Tanpa kategori" },
               ],
             },
           ]}
@@ -295,6 +329,11 @@ export default function AdminBeritaList() {
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <StatusBadge published={n.published} />
+                  {categoryName(n.categoryId) && (
+                    <span className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-xs font-semibold text-[#014aaf]">
+                      {categoryName(n.categoryId)}
+                    </span>
+                  )}
                   <span className="text-xs text-ink/55">{n.dateLabel}</span>
                 </div>
               </div>
@@ -332,6 +371,7 @@ export default function AdminBeritaList() {
             <thead>
               <tr className="border-b border-black/[0.06] text-[11px] font-semibold uppercase tracking-wider text-ink/40">
                 <th className="px-6 py-4">Berita</th>
+                <th className="px-6 py-4">Kategori</th>
                 <th className="px-6 py-4">Tag</th>
                 <th className="px-6 py-4">Tanggal</th>
                 <th className="px-6 py-4">Status</th>
@@ -359,6 +399,15 @@ export default function AdminBeritaList() {
                     </div>
                   </td>
                   <td className="px-6 py-3.5">
+                    {categoryName(n.categoryId) ? (
+                      <span className="whitespace-nowrap rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-xs font-semibold text-[#014aaf]">
+                        {categoryName(n.categoryId)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-ink/35">&mdash;</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3.5">
                     <div className="flex max-w-[200px] flex-wrap gap-1.5">
                       {n.tags.map((t) => (
                         <span
@@ -383,14 +432,14 @@ export default function AdminBeritaList() {
               ))}
               {loading && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-ink/45">
+                  <td colSpan={6} className="px-6 py-14 text-center text-ink/45">
                     Memuat…
                   </td>
                 </tr>
               )}
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-14 text-center text-ink/45">
+                  <td colSpan={6} className="px-6 py-14 text-center text-ink/45">
                     {news.length === 0 ? "Belum ada berita." : "Berita tidak ditemukan."}
                   </td>
                 </tr>

@@ -13,6 +13,7 @@ import type {
   AdminGovernanceMember,
   AdminJob,
   AdminNews,
+  AdminNewsCategory,
   Application,
 } from "./types";
 
@@ -50,6 +51,7 @@ const toAdminNews = (r: NewsRow): AdminNews => ({
   author: r.author,
   caption: r.caption ?? "",
   tags: r.tags ?? [],
+  categoryId: r.categoryId ?? "",
   coverImageUrl: r.coverImageUrl ?? "",
   dateLabel: formatDateId(r.publishedAt, r.dateLabel),
   publishedAt: r.publishedAt ?? "",
@@ -119,6 +121,9 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
     author: item.author || "Redaksi",
     caption: item.caption || null,
     tags: item.tags,
+    // "" is the "Tanpa Kategori" choice in the form; store it as NULL so the
+    // public read's LEFT JOIN sees no category rather than an empty-string id.
+    categoryId: item.categoryId || null,
     coverImageUrl,
     dateLabel: item.dateLabel,
     publishedAt: item.publishedAt || null,
@@ -136,6 +141,7 @@ export async function saveNews(item: AdminNews): Promise<{ error?: string }> {
         author: values.author,
         caption: values.caption,
         tags: values.tags,
+        categoryId: values.categoryId,
         coverImageUrl: values.coverImageUrl,
         dateLabel: values.dateLabel,
         publishedAt: values.publishedAt,
@@ -175,6 +181,130 @@ export async function togglePublish(id: string): Promise<{ published: boolean } 
     .where(eq(schema.news.id, id));
   revalidateNews();
   return { published: next };
+}
+
+// ── Kategori Berita ───────────────────────────────────────────────────────
+// Part of the Berita section, not a section of its own: the categories only
+// exist to file articles under, so whoever may edit articles (master, humas)
+// may edit the tabs they go in.
+type NewsCategoryRow = typeof schema.newsCategories.$inferSelect;
+
+const toAdminNewsCategory = (r: NewsCategoryRow): AdminNewsCategory => ({
+  id: r.id,
+  name: r.name,
+  slug: r.slug,
+  sortOrder: r.sortOrder,
+});
+
+export async function listNewsCategories(): Promise<AdminNewsCategory[]> {
+  await requireSection("berita");
+  const rows = await db
+    .select()
+    .from(schema.newsCategories)
+    .orderBy(asc(schema.newsCategories.sortOrder), asc(schema.newsCategories.name));
+  return rows.map(toAdminNewsCategory);
+}
+
+export async function saveNewsCategory(
+  item: AdminNewsCategory,
+): Promise<{ error?: string }> {
+  await requireSection("berita");
+  const name = item.name.trim();
+  const slug = item.slug.trim();
+  if (!name) return { error: "Nama kategori wajib diisi." };
+  if (!slug) return { error: "Slug kategori wajib diisi." };
+  // The slug is the key the public tab filters on, so a duplicate would make
+  // two tabs show the same articles. Checked here because the unique index
+  // would otherwise surface as an opaque, redacted production error.
+  const [clash] = await db
+    .select({ id: schema.newsCategories.id })
+    .from(schema.newsCategories)
+    .where(eq(schema.newsCategories.slug, slug));
+  if (clash && clash.id !== item.id) {
+    return { error: "Slug kategori sudah dipakai. Ubah nama atau slug." };
+  }
+
+  // New rows land at the end of the tab bar. `count`, not max+1: the move
+  // action renumbers densely, so the row count IS the next free position.
+  const existing = await db
+    .select({ id: schema.newsCategories.id })
+    .from(schema.newsCategories);
+  const isNew = !existing.some((c) => c.id === item.id);
+
+  const values = {
+    id: item.id,
+    name,
+    slug,
+    sortOrder: isNew ? existing.length : item.sortOrder,
+  };
+  await db
+    .insert(schema.newsCategories)
+    .values(values)
+    .onConflictDoUpdate({
+      target: schema.newsCategories.id,
+      set: {
+        name: values.name,
+        slug: values.slug,
+        sortOrder: values.sortOrder,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  revalidateNews();
+  return {};
+}
+
+/**
+ * Delete a category and un-file everything in it. The articles stay published;
+ * they just fall back to appearing under "Semua Berita" only.
+ *
+ * This is the FK's ON DELETE SET NULL, written by hand — see the note on
+ * `news.categoryId` in the schema for why the column carries no constraint.
+ */
+export async function deleteNewsCategory(id: string): Promise<void> {
+  await requireSection("berita");
+  await db
+    .update(schema.news)
+    .set({ categoryId: null, updatedAt: new Date().toISOString() })
+    .where(eq(schema.news.categoryId, id));
+  await db.delete(schema.newsCategories).where(eq(schema.newsCategories.id, id));
+  revalidateNews();
+}
+
+/**
+ * Move a category one place left/right in the tab bar, returning the new id
+ * order so the client can reconcile.
+ *
+ * Renumbers the whole list densely rather than swapping two values: rows that
+ * predate any ordering all share the default 0, and swapping equal numbers
+ * moves nothing.
+ */
+export async function moveNewsCategory(
+  id: string,
+  direction: -1 | 1,
+): Promise<string[] | null> {
+  await requireSection("berita");
+  const rows = await db
+    .select({ id: schema.newsCategories.id })
+    .from(schema.newsCategories)
+    .orderBy(asc(schema.newsCategories.sortOrder), asc(schema.newsCategories.name));
+
+  const order = rows.map((r) => r.id);
+  const from = order.indexOf(id);
+  if (from < 0) return null; // deleted by another admin
+  const to = from + direction;
+  if (to < 0 || to >= order.length) return order; // already at the end
+  [order[from], order[to]] = [order[to], order[from]];
+
+  await Promise.all(
+    order.map((categoryId, i) =>
+      db
+        .update(schema.newsCategories)
+        .set({ sortOrder: i, updatedAt: new Date().toISOString() })
+        .where(eq(schema.newsCategories.id, categoryId)),
+    ),
+  );
+  revalidateNews();
+  return order;
 }
 
 // ── Lowongan ──────────────────────────────────────────────────────────────

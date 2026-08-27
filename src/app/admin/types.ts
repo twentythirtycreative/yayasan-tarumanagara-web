@@ -14,10 +14,21 @@ export type AdminNews = {
   author: string;
   caption: string;
   tags: string[];
+  /** `news_categories.id`, or "" for none. Drives the tab on /berita. */
+  categoryId: string;
   coverImageUrl: string;
   dateLabel: string;
   publishedAt: string; // ISO "YYYY-MM-DD"
   published: boolean;
+};
+
+/** A tab on /berita. Managed under Berita → Kelola Kategori. */
+export type AdminNewsCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  /** Ascending = left to right in the public tab bar. */
+  sortOrder: number;
 };
 
 export type AdminJob = {
@@ -53,6 +64,12 @@ export type Application = {
 };
 
 export const NEWS_TAGS = ["Kemitraan Strategis", "Kegiatan", "Berita"] as const;
+
+/**
+ * The first tab on /berita. Not a row in `news_categories` — it is the
+ * unfiltered list — so the value an article stores for it is simply "".
+ */
+export const ALL_NEWS_TAB_LABEL = "Semua Berita";
 
 export const slugify = (s: string) =>
   s

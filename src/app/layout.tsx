@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { SmoothScroll } from "@/components/smooth-scroll";
 import { siteConfig } from "@/lib/site";
 
 // Figma uses Plus Jakarta Sans throughout, including display headings
@@ -98,7 +97,6 @@ export default function RootLayout({
   return (
     <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white text-ink">
-        <SmoothScroll />
         {children}
         <Toaster position="top-center" />
       </body>

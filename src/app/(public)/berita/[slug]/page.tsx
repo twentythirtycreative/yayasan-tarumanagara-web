@@ -7,7 +7,7 @@ import { NewsTabs } from "../news-tabs";
 import { ShareButton } from "./share-button";
 import { CoverImage } from "@/components/cover-image";
 import { snippet } from "@/components/news-card";
-import { getNewsBySlug, getPublishedNews } from "@/lib/data/news";
+import { getNewsBySlug, getNewsCategories, getPublishedNews } from "@/lib/data/news";
 import { siteConfig } from "@/lib/site";
 
 // Held until an admin write invalidates the "news" tag — see lib/cache.ts.
@@ -74,7 +74,10 @@ export default async function BeritaDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const item = await getNewsBySlug(slug);
+  const [item, categories] = await Promise.all([
+    getNewsBySlug(slug),
+    getNewsCategories(),
+  ]);
   if (!item) notFound();
 
   // Full dateline incl. the "Jakarta, " prefix (e.g. "Jakarta, 13 Agustus 2025").
@@ -122,7 +125,10 @@ export default async function BeritaDetailPage({
           />
           <div className="absolute inset-0 bg-black/45" />
         </div>
-        <NewsTabs />
+        {/* The listing's tab bar, reused as this page's header: the article's
+            own category is the one underlined, and every tab leads back to the
+            listing, which is where filtering happens. */}
+        <NewsTabs categories={categories} active={item.category?.slug ?? null} />
       </section>
 
       {/* Article content — sits directly on the background (no card) */}

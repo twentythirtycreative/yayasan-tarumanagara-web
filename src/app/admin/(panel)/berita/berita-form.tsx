@@ -7,9 +7,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, Save, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NEWS_TAGS, slugify, shortId, useAdmin, type AdminNews } from "../../_store";
+import {
+  NEWS_TAGS,
+  slugify,
+  shortId,
+  useAdmin,
+  type AdminNews,
+} from "../../_store";
 import { useConfirm } from "../confirm";
 import { FieldError } from "@/components/form-error";
+import { GlassSelect } from "@/components/glass-select";
 import {
   ACCEPTED_IMAGE_TYPES,
   MAX_IMAGE_SIZE,
@@ -144,7 +151,7 @@ function TagInput({
 
 export function BeritaForm({ initial }: { initial?: AdminNews }) {
   const router = useRouter();
-  const { saveNews } = useAdmin();
+  const { saveNews, newsCategories } = useAdmin();
   const confirm = useConfirm();
   const editing = Boolean(initial);
 
@@ -154,6 +161,9 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
   const [caption, setCaption] = useState(initial?.caption ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  // "" = Tanpa Kategori. An id whose category was deleted behaves the same way:
+  // no option matches, so the select falls back to showing the placeholder.
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? "");
   const [coverImageUrl, setCoverImageUrl] = useState(
     initial?.coverImageUrl ?? "",
   );
@@ -201,6 +211,7 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
       author: author.trim() || "Redaksi",
       caption: caption.trim(),
       tags,
+      categoryId,
       coverImageUrl: coverImageUrl.trim(),
       dateLabel: formatDateId(dateISO || todayISO()),
       publishedAt: dateISO || todayISO(),
@@ -266,6 +277,34 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
             />
           </div>
           <div className="flex flex-col gap-1.5">
+            <label className={labelCls}>Kategori</label>
+            <GlassSelect
+              value={categoryId}
+              onChange={setCategoryId}
+              placeholder="Tanpa Kategori"
+              triggerClassName={field}
+              options={[
+                { value: "", label: "Tanpa Kategori" },
+                ...[...newsCategories]
+                  .sort(
+                    (a, b) =>
+                      a.sortOrder - b.sortOrder || a.name.localeCompare(b.name),
+                  )
+                  .map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
+            <p className="text-xs text-ink/45">
+              Menentukan tab tempat berita ini tampil di halaman publik. Tanpa
+              kategori tetap tampil di tab Semua Berita.{" "}
+              <Link
+                href="/admin/berita/kategori"
+                className="font-medium text-[#014aaf] hover:underline"
+              >
+                Kelola kategori
+              </Link>
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5">
             <label className={labelCls}>Tags</label>
             <TagInput value={tags} onChange={setTags} suggestions={NEWS_TAGS} />
           </div>
@@ -277,9 +316,6 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
                 setContent(e.target.value);
                 revalidate({ content: e.target.value });
               }}
-              // Opt out of Lenis smooth-scroll so the mouse wheel scrolls INSIDE
-              // the textarea instead of the page.
-              data-lenis-prevent
               aria-invalid={Boolean(errors.content)}
               className={cn(errors.content ? fieldErr : field, "min-h-[220px] flex-1 resize-y leading-relaxed")}
               placeholder="Tulis isi artikel di sini…"
@@ -395,7 +431,6 @@ export function BeritaForm({ initial }: { initial?: AdminNews }) {
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 rows={2}
-                data-lenis-prevent
                 className={cn(field, "resize-y")}
                 placeholder="Keterangan di bawah gambar sampul artikel"
               />

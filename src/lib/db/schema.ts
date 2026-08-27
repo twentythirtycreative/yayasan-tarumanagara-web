@@ -30,6 +30,26 @@ export const images = sqliteTable("images", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Kategori berita — the tab bar on /berita. Admin-managed, so the tabs are
+ * whatever this table holds rather than a constant in the component.
+ *
+ * "Semua Berita" is NOT a row here: it is the unfiltered list, shown first and
+ * always present even when this table is empty. Every other tab is one row, in
+ * `sortOrder` (left to right).
+ */
+export const newsCategories = sqliteTable("news_categories", {
+  id: text("id").primaryKey().$defaultFn(uuid),
+  /** Tab label, e.g. "Media Tarumanagara". */
+  name: text("name").notNull(),
+  /** URL-safe key the public filter matches on. Unique across categories. */
+  slug: text("slug").notNull().unique(),
+  /** Ascending = left to right in the tab bar. Ties fall back to name. */
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 /** Berita & Kegiatan (news / activities). */
 export const news = sqliteTable("news", {
   id: text("id").primaryKey().$defaultFn(uuid),
@@ -43,6 +63,19 @@ export const news = sqliteTable("news", {
   /** "/api/images/<id>" (see `images`), or a /public path. Never inline base64. */
   coverImageUrl: text("cover_image_url"),
   tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default([]),
+  /**
+   * Which tab on /berita the article appears under (`news_categories.id`), or
+   * NULL for none — those still show under "Semua Berita", which is every
+   * article regardless of category.
+   *
+   * Deliberately a plain column with no `references()`: drizzle-kit push adds a
+   * bare column with ALTER TABLE, but adding a FOREIGN KEY to an existing
+   * SQLite table forces it down the rebuild path (create-copy-drop) on a table
+   * that already holds live articles. The one rule a FK would buy — clear the
+   * column when its category is deleted — is enforced in `deleteNewsCategory`
+   * instead, and reads left-join so a dangling id degrades to "no category".
+   */
+  categoryId: text("category_id"),
   /** Human display date, e.g. "13 August 2025". */
   dateLabel: text("date_label").notNull().default(""),
   /** Machine date (ISO "YYYY-MM-DD") — for sorting / SEO <time>. */
@@ -157,6 +190,8 @@ export type Image = typeof images.$inferSelect;
 export type NewImage = typeof images.$inferInsert;
 export type News = typeof news.$inferSelect;
 export type NewNews = typeof news.$inferInsert;
+export type NewsCategory = typeof newsCategories.$inferSelect;
+export type NewNewsCategory = typeof newsCategories.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;

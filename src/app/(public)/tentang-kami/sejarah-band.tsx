@@ -179,13 +179,11 @@ export function SejarahBand() {
   // position that is off by however far the animation has travelled — hence the
   // scroll landing correctly only some of the time. The section never animates.
   //
-  // The smooth pass alone isn't enough. The section is only as tall as its
-  // card, so the page reflows for most of a second after the click — the exit,
-  // the enter and the column's `layout` transition all resize it — and a
-  // smooth scroll launched into that lands hundreds of pixels short. So the
-  // smooth scroll goes out immediately for the motion, and a plain jump
-  // afterwards puts it exactly on target. Once the smooth pass has landed the
-  // jump has nothing left to move and nobody sees it.
+  // One jump isn't enough. The section is only as tall as its card, so the page
+  // reflows for most of a second after the click — the exit, the enter and the
+  // column's `layout` transition all resize it — and a jump launched into that
+  // lands hundreds of pixels short. So it jumps immediately, then re-measures
+  // once the layout has settled and corrects if it has drifted.
   // Guard on the PREVIOUS value of `open`, not a boolean "have I run once" flag.
   // A `first.current` flag is not Strict-Mode safe: React dev-remounts the
   // component (effect → cleanup → effect) while the ref survives, so the second
@@ -206,9 +204,7 @@ export function SejarahBand() {
       window.scrollY -
       (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
 
-    const raf = requestAnimationFrame(() =>
-      window.scrollTo({ top: target(), behavior: "smooth" }),
-    );
+    const raf = requestAnimationFrame(() => window.scrollTo({ top: target() }));
     const settle = setTimeout(() => {
       const top = target();
       if (Math.abs(window.scrollY - top) > 2) window.scrollTo({ top });
@@ -329,12 +325,21 @@ export function SejarahBand() {
     <section
       ref={sectionRef}
       // One screen tall, replacing Figma's fixed 982px (and the vw clamp that
-      // tracked it). svh, not dvh or vh: dvh changes as the mobile toolbar
-      // collapses, and since the card column is pulled up by exactly this
-      // height, a unit that resizes mid-scroll would drag the cards with it.
-      // svh is the stable floor, so the band is never shorter than the visible
-      // area. (Tailwind v4 already needs a browser newer than svh's support.)
-      style={{ "--band": "100svh" } as React.CSSProperties}
+      // tracked it).
+      //
+      // lvh — the viewport with the mobile toolbars retracted — and not dvh or
+      // svh. dvh resizes as the toolbar collapses, and since the card column is
+      // pulled up by exactly this height, a unit that changes mid-scroll drags
+      // the cards with it. svh is stable but it is the SMALLEST viewport, i.e.
+      // shorter than what you are actually looking at the moment the toolbar
+      // retracts: the pinned band then stopped ~50px above the bottom of the
+      // screen and the white page surface showed through under the photo for
+      // the whole of an open card. lvh is stable AND never shorter than the
+      // visible area, so the band always reaches the bottom edge; the cost is
+      // only that its last strip sits below the fold while the toolbar is out,
+      // which cover simply crops. (Tailwind v4 already needs a browser newer
+      // than lvh's support.)
+      style={{ "--band": "100lvh" } as React.CSSProperties}
       // The one-screen floor is a floor, not a height: an open card is far
       // taller and the section grows past the photo onto the page surface,
       // which is what keeps Visi below the card. Who needs the floor depends on
