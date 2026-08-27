@@ -26,6 +26,10 @@ export type AdminNews = {
 export type AdminNewsCategory = {
   id: string;
   name: string;
+  /**
+   * Filter key for the public tab bar, derived from `name` by the server on
+   * every save — never entered or edited in the panel, and never sent as input.
+   */
   slug: string;
   /** Ascending = left to right in the public tab bar. */
   sortOrder: number;

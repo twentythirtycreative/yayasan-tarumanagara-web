@@ -155,12 +155,13 @@ export function AdminStoreProvider({
     saveNewsCategory: async (c) => {
       const res = await api.saveNewsCategory(c);
       if (res?.error) throw new Error(res.error);
+      // The server derives the slug (and the position of a new row), so store
+      // what it wrote rather than what was sent.
+      const saved = res.category ?? c;
       setNewsCategories((prev) =>
-        prev.some((x) => x.id === c.id)
-          ? prev.map((x) => (x.id === c.id ? c : x))
-          : // A new category is appended server-side, so append here too — its
-            // sortOrder is the length of the list it was added to.
-            [...prev, { ...c, sortOrder: prev.length }],
+        prev.some((x) => x.id === saved.id)
+          ? prev.map((x) => (x.id === saved.id ? saved : x))
+          : [...prev, saved],
       );
     },
     deleteNewsCategory: async (id) => {

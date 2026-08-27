@@ -16,7 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   ALL_NEWS_TAB_LABEL,
-  slugify,
   useAdmin,
   type AdminNewsCategory,
 } from "../../../_store";
@@ -48,11 +47,9 @@ export default function AdminKategoriBerita() {
   const confirm = useConfirm();
 
   const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editSlug, setEditSlug] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
   // Same ordering the public tab bar uses, so this list reads top-to-bottom as
@@ -65,25 +62,21 @@ export default function AdminKategoriBerita() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalName = name.trim();
-    const finalSlug = (slug.trim() || slugify(finalName)).trim();
     if (!finalName) {
       toast.error("Nama kategori wajib diisi.");
       return;
     }
-    if (!finalSlug) {
-      toast.error("Nama kategori harus memuat huruf atau angka.");
-      return;
-    }
     setAdding(true);
     try {
+      // `slug` is a placeholder: the action derives the real one from the name
+      // and hands it back, and the store keeps what came back.
       await saveNewsCategory({
         id: `c_${Date.now()}`,
         name: finalName,
-        slug: finalSlug,
+        slug: "",
         sortOrder: ordered.length,
       });
       setName("");
-      setSlug("");
       toast.success("Kategori ditambahkan");
     } catch (err) {
       toast.error(
@@ -99,19 +92,17 @@ export default function AdminKategoriBerita() {
   const startEdit = (c: AdminNewsCategory) => {
     setEditingId(c.id);
     setEditName(c.name);
-    setEditSlug(c.slug);
   };
 
   const saveEdit = async (c: AdminNewsCategory) => {
     const finalName = editName.trim();
-    const finalSlug = (editSlug.trim() || slugify(finalName)).trim();
-    if (!finalName || !finalSlug) {
-      toast.error("Nama dan slug kategori wajib diisi.");
+    if (!finalName) {
+      toast.error("Nama kategori wajib diisi.");
       return;
     }
     setBusy(c.id);
     try {
-      await saveNewsCategory({ ...c, name: finalName, slug: finalSlug });
+      await saveNewsCategory({ ...c, name: finalName });
       setEditingId(null);
       toast.success("Kategori disimpan");
     } catch (err) {
@@ -178,31 +169,15 @@ export default function AdminKategoriBerita() {
       {/* Add */}
       <form
         onSubmit={add}
-        className="glass-rim glass-card mt-6 grid gap-4 rounded-[18px] p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+        className="glass-rim glass-card mt-6 grid gap-4 rounded-[18px] p-5 sm:grid-cols-[1fr_auto] sm:items-end"
       >
         <div className="flex flex-col gap-1.5">
           <label className={labelCls}>Nama Kategori</label>
           <input
             value={name}
-            onChange={(e) => {
-              const next = e.target.value;
-              setName(next);
-              // The slug follows the name until it is edited by hand.
-              setSlug((prev) =>
-                prev === "" || prev === slugify(name) ? slugify(next) : prev,
-              );
-            }}
+            onChange={(e) => setName(e.target.value)}
             className={field}
             placeholder="mis. Media Tarumanagara"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className={labelCls}>Slug</label>
-          <input
-            value={slug}
-            onChange={(e) => setSlug(slugify(e.target.value))}
-            className={field}
-            placeholder="media-tarumanagara"
           />
         </div>
         <button
@@ -247,25 +222,25 @@ export default function AdminKategoriBerita() {
               </span>
 
               {editing ? (
-                <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-                  <input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className={field}
-                    placeholder="Nama kategori"
-                  />
-                  <input
-                    value={editSlug}
-                    onChange={(e) => setEditSlug(slugify(e.target.value))}
-                    className={field}
-                    placeholder="slug-kategori"
-                  />
-                </div>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      saveEdit(c);
+                    } else if (e.key === "Escape") {
+                      setEditingId(null);
+                    }
+                  }}
+                  autoFocus
+                  className={cn(field, "min-w-0 flex-1")}
+                  placeholder="Nama kategori"
+                />
               ) : (
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-[#00224f]">{c.name}</p>
-                  <p className="mt-0.5 truncate text-xs text-ink/50">/{c.slug}</p>
-                </div>
+                <p className="min-w-0 flex-1 truncate font-semibold text-[#00224f]">
+                  {c.name}
+                </p>
               )}
 
               {!editing && (

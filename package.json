@@ -15,7 +15,8 @@
     "create-admin": "node scripts/create-admin.cjs",
     "migrate:job-types": "node scripts/rename-job-types.cjs",
     "migrate:admin-role": "node scripts/add-admin-role.cjs",
-    "migrate:news-categories": "node scripts/add-news-categories.cjs"
+    "migrate:news-categories": "node scripts/add-news-categories.cjs",
+    "favicons": "node scripts/generate-favicons.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

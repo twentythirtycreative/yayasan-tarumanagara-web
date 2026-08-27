@@ -9,6 +9,7 @@ import { requireAdmin, requireSection } from "@/lib/auth/guard";
 import type { AdminRole } from "@/lib/auth/roles";
 import { deleteStoredImage, persistImageField } from "@/lib/images";
 import { MAX_IMAGE_SIZE, dataUrlBytes } from "@/lib/validators/upload";
+import { slugify } from "./types";
 import type {
   AdminGovernanceMember,
   AdminJob,
@@ -205,32 +206,47 @@ export async function listNewsCategories(): Promise<AdminNewsCategory[]> {
   return rows.map(toAdminNewsCategory);
 }
 
+/**
+ * Create or rename a category. The slug is derived here and the one on `item`
+ * is ignored: it is the key the public tab filters on — plumbing, not editorial
+ * — so admin names the tab and the system keeps the key consistent and unique.
+ *
+ * Returns the saved row so the client mirrors the slug that was actually
+ * written rather than the placeholder it sent.
+ */
 export async function saveNewsCategory(
   item: AdminNewsCategory,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; category?: AdminNewsCategory }> {
   await requireSection("berita");
   const name = item.name.trim();
-  const slug = item.slug.trim();
   if (!name) return { error: "Nama kategori wajib diisi." };
-  if (!slug) return { error: "Slug kategori wajib diisi." };
-  // The slug is the key the public tab filters on, so a duplicate would make
-  // two tabs show the same articles. Checked here because the unique index
-  // would otherwise surface as an opaque, redacted production error.
-  const [clash] = await db
-    .select({ id: schema.newsCategories.id })
-    .from(schema.newsCategories)
-    .where(eq(schema.newsCategories.slug, slug));
-  if (clash && clash.id !== item.id) {
-    return { error: "Slug kategori sudah dipakai. Ubah nama atau slug." };
+
+  const existing = await db
+    .select({
+      id: schema.newsCategories.id,
+      name: schema.newsCategories.name,
+      slug: schema.newsCategories.slug,
+    })
+    .from(schema.newsCategories);
+  const others = existing.filter((c) => c.id !== item.id);
+
+  // Two tabs with the same name are indistinguishable to a reader, so that is
+  // the collision worth reporting — in the editor's own terms, not the slug's.
+  if (others.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+    return { error: "Nama kategori itu sudah dipakai. Pakai nama lain." };
   }
 
-  // New rows land at the end of the tab bar. `count`, not max+1: the move
-  // action renumbers densely, so the row count IS the next free position.
-  const existing = await db
-    .select({ id: schema.newsCategories.id })
-    .from(schema.newsCategories);
-  const isNew = !existing.some((c) => c.id === item.id);
+  // Distinct names can still reduce to the same slug ("Media Untar" vs "Media,
+  // Untar"), and a name of pure punctuation reduces to nothing at all — so the
+  // derived key gets a fallback and a numeric suffix until it is free. Names
+  // are already known unique here, so this loop always terminates.
+  const base = slugify(name) || "kategori";
+  let slug = base;
+  for (let i = 2; others.some((c) => c.slug === slug); i++) slug = `${base}-${i}`;
 
+  // New rows land at the end of the tab bar. `length`, not max+1: the move
+  // action renumbers densely, so the row count IS the next free position.
+  const isNew = !existing.some((c) => c.id === item.id);
   const values = {
     id: item.id,
     name,
@@ -250,7 +266,7 @@ export async function saveNewsCategory(
       },
     });
   revalidateNews();
-  return {};
+  return { category: values };
 }
 
 /**
