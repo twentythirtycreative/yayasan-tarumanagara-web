@@ -115,12 +115,13 @@ export function UnitSelector() {
                     </a>
                   ))}
                 </div>
-                {/* CTA opens the card's primary location on Google Maps. */}
+                {/* CTA opens the unit's own site (Instagram for the units
+                    that have no website of their own). */}
                 <a
-                  href={card.locations[0].map}
+                  href={card.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Lihat lokasi ${card.title} di Google Maps`}
+                  aria-label={`Kunjungi situs ${card.title}`}
                   className="group/cta mt-auto flex items-center justify-between px-5 pt-6 pb-1"
                 >
                   <span className="text-[12px] font-semibold text-[#015ddb] group-hover/cta:underline">

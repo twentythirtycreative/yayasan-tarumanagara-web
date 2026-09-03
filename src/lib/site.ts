@@ -65,7 +65,7 @@ export const navLinks = [
  *  `locations` (Figma 542:1075 et al) renders one pin + site line per entry
  *  under the card title — Universitas Tarumanagara is the only card with two.
  *  Each location carries the Google Maps link for that site; the card's
- *  "Pelajari lebih lanjut" button opens the first one. */
+ *  "Pelajari lebih lanjut" button opens the unit's own `website`. */
 export const units = [
   {
     slug: "pendidikan",
@@ -74,6 +74,7 @@ export const units = [
       {
         title: "Universitas Tarumanagara",
         image: "/images/units/untar.png",
+        website: "https://untar.ac.id/",
         locations: [
           { label: "Kampus 1: Letjen S Parman", map: mapLinks.kampus1 },
           { label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 },
@@ -82,11 +83,13 @@ export const units = [
       {
         title: "Tarumanagara Xinya College",
         image: "/images/units/xinya.png",
+        website: "https://pmb.tarumanagara.ac.id/",
         locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
       {
         title: "Institut Tarumanagara",
         image: "/images/units/itaru.png",
+        website: "https://itaru.ac.id/",
         locations: [{ label: "Kampus 3: Cilandak", map: mapLinks.kampus3 }],
       },
     ],
@@ -98,11 +101,13 @@ export const units = [
       {
         title: "Rumah Sakit Royal Taruma",
         image: "/images/units/royal-taruma.png",
+        website: "https://rsroyaltaruma.com/",
         locations: [{ label: "RS Royal Taruma", map: mapLinks.royalTaruma }],
       },
       {
         title: "PT Taruma Bhakti Medika",
         image: "/images/units/bhakti-medika.png",
+        website: "https://rsroyaltaruma.com/",
         locations: [{ label: "RS Royal Taruma", map: mapLinks.royalTaruma }],
       },
     ],
@@ -114,6 +119,7 @@ export const units = [
       {
         title: "Tarumanagara Enterprise",
         image: "/images/units/enterprise.png",
+        website: "https://www.instagram.com/enterprise.tarumanagara/",
         locations: [{ label: "Kampus 1: Letjen S Parman", map: mapLinks.kampus1 }],
       },
     ],
@@ -125,6 +131,7 @@ export const units = [
       {
         title: "PT Taruma Bhakti Usaha",
         image: "/images/units/bhakti-usaha.png",
+        website: "https://www.tarumabhaktiusaha.co.id/index.html",
         locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
     ],
@@ -136,6 +143,7 @@ export const units = [
       {
         title: "Untar Residence",
         image: "/images/units/untar-residence.png",
+        website: "https://www.instagram.com/untar_residence/?hl=en",
         locations: [{ label: "Kampus 2: Tj Duren", map: mapLinks.kampus2 }],
       },
     ],
