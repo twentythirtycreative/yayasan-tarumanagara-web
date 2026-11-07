@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { mapLinks, siteConfig } from "@/lib/site";
+import { siteConfig, units, type UnitCard } from "@/lib/site";
 
 // Social icons exported from Figma (footer node 332:962). The PNGs are alpha
 // masks, tinted #f5f5f5 via CSS mask so they match the design exactly.
@@ -15,18 +15,25 @@ const socials = [
 // Aug 2026). The second sub-column has no heading of its own; it starts level
 // with the first link of the first one. The design spells these
 // "Tarumanegara"; corrected to "Tarumanagara" here at the client's request.
-// Only Untar has a site of its own; the rest point at their campus on Google
-// Maps, per the client's link list.
+// Each link opens the unit's own site, read from the homepage unit cards
+// (lib/site.ts `units`) so the two can't drift apart again — the footer kept
+// pointing at Google Maps after the cards had moved to the units' websites.
+const unitCards = units.flatMap((u): readonly UnitCard[] => u.cards);
+
+function unitSite(title: UnitCard["title"]): string {
+  return unitCards.find((c) => c.title === title)?.website ?? "/";
+}
+
 const ekosistem = [
   [
-    { label: "Untar", href: "https://untar.ac.id" },
-    { label: "Tarumanagara Xinya College", href: mapLinks.kampus2 },
-    { label: "Institut Tarumanagara", href: mapLinks.kampus3 },
-    { label: "Taruma Enterprise", href: mapLinks.kampus1 },
+    { label: "Untar", href: unitSite("Universitas Tarumanagara") },
+    { label: "Tarumanagara Xinya College", href: unitSite("Tarumanagara Xinya College") },
+    { label: "Institut Tarumanagara", href: unitSite("Institut Tarumanagara") },
+    { label: "Taruma Enterprise", href: unitSite("Tarumanagara Enterprise") },
   ],
   [
-    { label: "RS Royal Taruma", href: mapLinks.royalTaruma },
-    { label: "Untar Residence", href: mapLinks.kampus2 },
+    { label: "RS Royal Taruma", href: unitSite("Rumah Sakit Royal Taruma") },
+    { label: "Untar Residence", href: unitSite("Untar Residence") },
   ],
 ];
 
