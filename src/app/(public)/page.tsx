@@ -14,11 +14,27 @@ import type { Metadata } from "next";
 // canonical URL has to be declared here, now that it is no longer set globally.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-const organizationLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
+// WebSite + Organization in one graph. The WebSite node is what Google reads
+// for the site name shown above the search result; without it Google fell back
+// to the bare domain ("tarumanagara.org"). Its `url` must be the canonical
+// homepage.
+const organizationId = `${siteConfig.url}/#organization`;
+
+const websiteLd = {
+  "@type": "WebSite",
+  "@id": `${siteConfig.url}/#website`,
   name: siteConfig.name,
-  alternateName: siteConfig.shortName,
+  alternateName: [siteConfig.shortName, "Tarumanagara Foundation"],
+  url: `${siteConfig.url}/`,
+  inLanguage: "id-ID",
+  publisher: { "@id": organizationId },
+};
+
+const organizationLd = {
+  "@type": "Organization",
+  "@id": organizationId,
+  name: siteConfig.name,
+  alternateName: [siteConfig.shortName, "Tarumanagara Foundation"],
   url: siteConfig.url,
   logo: `${siteConfig.url}/images/logo-white-trim.png`,
   image: `${siteConfig.url}${siteConfig.ogImage}`,
@@ -52,7 +68,12 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [websiteLd, organizationLd],
+          }),
+        }}
       />
       <Hero />
 

@@ -30,7 +30,10 @@ const jakarta = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    // Google cuts title links at ~600px (roughly 55-60 characters); the
+    // "name — tagline" form ran to 63 and showed up truncated. The share cards
+    // below keep the full tagline since they have room for it.
+    default: `${siteConfig.name} | Menginspirasi Masa Depan`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
