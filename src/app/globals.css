@@ -23,7 +23,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
 
   /* -----------------------------------------------------------------------
@@ -31,7 +30,7 @@
      (node 332:2237). Seven roles only; line-height & letter-spacing are baked
      in, apply weight with the usual font-* utilities.
        display   128  Bold       modal / hero titles
-       header     80  ExtraBold  page & section titles
+       header     60  ExtraBold  page & section titles (80 in Figma)
        title-1    32  Bold       tabs, titles, forms
        title-2    21  Bold       buttons, tabs, card titles, forms
        headline   18  Medium     info paragraphs, buttons, pills
@@ -56,10 +55,10 @@
   --text-title-1--line-height: 1.15;
   --text-title-1--letter-spacing: -0.01em;
 
-  /* title-1-sm — 28px, between title-1 (32) and title-2 (21). The sambutan
-     welcome heading needs to come down from 32 without dropping to 21, which
-     reads as a card title rather than a statement. Outside the 7-role scale
-     like text-hero / text-meta; kept as a token, not a raw value. */
+  /* title-1-sm — 28px, between title-1 (32) and title-2 (21), for the sambutan
+     welcome heading: smaller than 32, but 21 would read as a card title rather
+     than a statement. Outside the 7-role scale like text-hero / text-meta; kept
+     as a token, not a raw value. */
   --text-title-1-sm: clamp(1.4375rem, 2.6vw, 28px);
   --text-title-1-sm--line-height: 1.2;
   --text-title-1-sm--letter-spacing: -0.01em;
@@ -76,7 +75,7 @@
   --text-caption: 0.875rem; /* 14px */
   --text-caption--line-height: 1.45;
 
-  /* meta — 12px sub-caption for dense card meta (news excerpt + tag row).
+  /* meta — 11px sub-caption for dense card meta (news excerpt + tag row).
      Outside the 7-role scale like text-hero; kept as a token, not a raw value. */
   --text-meta: 0.6875rem; /* 11px */
   --text-meta--line-height: 1.45;
@@ -241,29 +240,10 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Glassmorphism (Apple-style) — reusable across navbar & cards
+   Glassmorphism utilities
 --------------------------------------------------------------------------- */
 @layer components {
-  .glass {
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(8px) saturate(140%);
-    -webkit-backdrop-filter: blur(8px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  }
-
-  /* Dark glass for the navbar sitting over the dark hero */
-  .glass-dark {
-    background: rgba(0, 34, 79, 0.35);
-    backdrop-filter: blur(7px) saturate(140%);
-    -webkit-backdrop-filter: blur(7px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  }
-
-  /* Solid-ish glass card on light backgrounds (welcome card, news, forms) */
+  /* Solid-ish glass card on light backgrounds (admin panel cards and forms) */
   .glass-card {
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(10px) saturate(160%);
@@ -272,7 +252,7 @@
     box-shadow: 0 10px 40px rgba(0, 34, 79, 0.1);
   }
 
-  /* Glass buttons — neutral (secondary) and brand-tinted (primary) */
+  /* Neutral glass button */
   .glass-btn {
     background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(10px) saturate(160%);
@@ -288,29 +268,6 @@
   }
   .glass-btn:hover {
     background: rgba(255, 255, 255, 0.72);
-  }
-  .glass-btn-primary {
-    background: linear-gradient(
-      135deg,
-      rgba(1, 74, 175, 0.9),
-      rgba(0, 77, 182, 0.72)
-    );
-    backdrop-filter: blur(10px) saturate(160%);
-    -webkit-backdrop-filter: blur(10px) saturate(160%);
-    border: 1px solid transparent;
-    box-shadow: 0 8px 24px rgba(1, 74, 175, 0.26);
-    color: #fff;
-    transition:
-      background 0.2s ease,
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-  .glass-btn-primary:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(1, 74, 175, 1),
-      rgba(0, 77, 182, 0.85)
-    );
   }
 
   /* Light rim on the edge of glass surfaces (navbar, glass cards). Plain 1px
@@ -354,20 +311,11 @@
 
   /* Fallback for browsers without backdrop-filter support */
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .glass {
-      background: rgba(255, 255, 255, 0.85);
-    }
-    .glass-dark {
-      background: rgba(0, 34, 79, 0.92);
-    }
     .glass-card {
       background: rgba(255, 255, 255, 0.96);
     }
     .glass-btn {
       background: rgba(255, 255, 255, 0.9);
-    }
-    .glass-btn-primary {
-      background: #015ddb;
     }
   }
 }

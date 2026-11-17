@@ -231,7 +231,6 @@ export default function AdminLamaranList() {
         Daftar pelamar yang mengirim CV melalui halaman Karir.
       </p>
 
-      {/* Toolbar: search + filter + export, all in one row */}
       <div className="mt-6 flex items-center gap-3">
         <div className="glass-rim glass-card flex w-full items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
           <Search className="h-4 w-4 text-ink/40" />

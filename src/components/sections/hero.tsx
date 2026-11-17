@@ -7,21 +7,20 @@ import { motion } from "motion/react";
 // Smooth entrance easing (easeOutExpo-ish) — plays once on load.
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
-// Building framing (Figma node 1:952). The hero photo is now the real Untar
-// tower, and Figma shows it whole — no zoom, no pan, the frame is the photo.
-// Figma stretches it to 1440x844; we object-cover instead so it stays undistorted
-// at arbitrary viewport aspects. The photo (1332x882, aspect 1.51) is wider than
-// tall, so a 100svh hero crops it vertically: 45% biases the visible window
-// slightly toward the top, which keeps the roofline and antenna clear above the
-// "Membangun Nilai," bar and spends the crop on the empty forecourt instead.
+// Building framing (Figma node 1:952). Figma shows the Untar tower photo whole
+// (no zoom, no pan), stretched to 1440x844; we object-cover instead so it stays
+// undistorted at arbitrary viewport aspects. The photo (1332x882, aspect 1.51)
+// is wider than tall, so a 100svh hero crops it vertically: 45% biases the
+// visible window slightly toward the top, which keeps the roofline and antenna
+// clear above the "Membangun Nilai," bar and spends the crop on the empty
+// forecourt instead.
 // Grade: brightness 0.46, deliberately a step lighter than Figma. The fitted
 // value was 0.38, measured against the Figma render sampled at the source
 // photo's own pixels — with contrast 1.25 it reproduced Figma's greys within a
-// couple of levels (sky 171 -> 49, 210 -> 68, facade 141 -> 35). That reads
-// heavier on a real screen than it does in the Figma canvas, so the brightness
-// is the one value off the fit; contrast and saturate still carry the rest of
-// the look, the latter because Figma keeps more blue in the shadows than a
-// plain brightness cut does. Adjust here rather than in the two overlays
+// couple of levels (sky 171 -> 49, 210 -> 68, facade 141 -> 35) but read
+// heavier on a real screen than on the Figma canvas. Contrast and saturate keep
+// their fitted values, the latter because Figma keeps more blue in the shadows
+// than a plain brightness cut does. Adjust here rather than in the two overlays
 // below — this is the only knob that moves the whole image evenly.
 const imgClass =
   "object-cover object-[50%_45%] brightness-[0.46] contrast-[1.25] saturate-[1.3]";
@@ -44,10 +43,7 @@ export function Hero() {
           is only a whisper of a vignette to seat the tagline and Discover More. */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
 
-      {/* "Membangun Nilai," bar. The old design had a second, cropped copy of the
-          photo layered on top so the building's peak cut across this bar; the new
-          Figma frames the tower head-on with nothing in front of it, so the bar
-          simply sits above the photo and the whole z-index dance is gone. */}
+      {/* "Membangun Nilai," bar */}
       <div className="relative z-30 flex w-full max-w-[720px] translate-y-[14px] flex-col items-center px-6 text-center">
         <motion.span
           initial={{ opacity: 0, y: 24 }}

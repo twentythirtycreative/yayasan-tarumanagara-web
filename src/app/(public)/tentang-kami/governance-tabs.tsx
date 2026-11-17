@@ -135,7 +135,8 @@ export function GovernanceTabs({
         </div>
       )}
 
-      {/* Transform-based carousel (arrow navigation only) */}
+      {/* Transform-based carousel: arrows or a click on a card move the
+          selection; there is no scroll or drag. */}
       <div className={cn("relative mt-10", count === 0 && "hidden")}>
         <div className="site-container">
           <div
@@ -157,8 +158,8 @@ export function GovernanceTabs({
                   person={p}
                   selected={i === selected}
                   onSelect={() => setSelected(i)}
-                  // Preload the two unique photos (cards 0 & 1 cover both) so
-                  // they're decoded before the first slide → smooth cold-load.
+                  // Preload the first two cards' photos so they're decoded
+                  // before the first slide.
                   priority={i < 2}
                 />
               ))}
@@ -259,8 +260,8 @@ function PersonCard({
           fill
           sizes="316px"
           priority={priority}
-          // Admin uploads land in the DB as base64 data URLs; the image
-          // optimiser can't fetch those, so they have to bypass it.
+          // Legacy inline `data:` photos (stored before the `images` table)
+          // can't be fetched by the image optimiser, so they bypass it.
           unoptimized={person.photo.startsWith("data:")}
           draggable={false}
           style={{ objectPosition: person.pos }}

@@ -5,11 +5,11 @@ import { db, schema } from "@/lib/db";
 /**
  * Image storage for admin uploads.
  *
- * Uploads still reach the Server Action as a base64 `data:` URL (the browser has
+ * Uploads reach the Server Action as a base64 `data:` URL (the browser has
  * nowhere else to put them), but they are unpacked here into the `images` table
  * and the owning row stores only `/api/images/<id>`. That keeps cover photos and
  * portraits out of every cached list payload — see the `images` table comment in
- * `schema.ts` for why that ceiling matters.
+ * `schema.ts` for why that matters.
  */
 
 /** Public path prefix served by `app/api/images/[id]/route.ts`. */

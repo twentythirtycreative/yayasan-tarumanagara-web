@@ -59,7 +59,6 @@ export default function AdminLowonganList() {
         </Link>
       </div>
 
-      {/* Search + filter */}
       <div className="mt-6 flex items-center gap-3">
         <div className="glass-rim glass-card flex w-full items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
           <Search className="h-4 w-4 text-ink/40" />

@@ -1,9 +1,10 @@
 /**
- * Central upload limits. Turso stores CVs (BLOB) and cover images (base64 in a
- * TEXT column), so caps are deliberately modest but practical:
+ * Central upload limits. Turso stores CVs and images as BLOBs (`applications`
+ * and `images` tables), so caps are deliberately modest but practical:
  *   - CV: 5 MB    — comfortably fits a PDF/Word resume.
- *   - Image: 5 MB — cover photo cap.
- * base64 inflates size ~33%, which is accounted for on the server.
+ *   - Image: 5 MB — cover/portrait cap.
+ * Images reach the server as base64 data URLs (~33% larger); the server checks
+ * the decoded size via `dataUrlBytes`.
  */
 export const MB = 1024 * 1024;
 

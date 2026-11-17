@@ -5,10 +5,8 @@ import { NewsCard, type NewsCardData } from "@/components/news-card";
 
 /**
  * Horizontal news carousel (Figma 342:1167…). Cards start at the global content
- * margin and bleed off the right edge of the white panel. The card nearest the
- * left content edge is "featured": it scales up to full size with a large soft
- * shadow, while the others shrink (~0.82×, matching the 472px vs 375px Figma
- * ratio). A progress bar tracks the scroll position.
+ * margin and can scroll out past both viewport edges; a hovered card scales up.
+ * A draggable scrollbar tracks the scroll position.
  */
 export function NewsCarousel({ items }: { items: NewsCardData[] }) {
   const ref = useRef<HTMLDivElement>(null);

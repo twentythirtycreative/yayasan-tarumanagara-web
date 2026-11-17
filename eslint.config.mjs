@@ -17,7 +17,7 @@ const eslintConfig = defineConfig([
     // One-off DB/admin scripts in scripts/ are plain CommonJS run straight
     // through node (`node scripts/foo.cjs`), outside the bundler and outside
     // tsconfig. `require` is the correct form there, so the TS-oriented ban on
-    // it only produced noise that buried the real findings.
+    // it is switched off.
     files: ["scripts/**/*.cjs"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },

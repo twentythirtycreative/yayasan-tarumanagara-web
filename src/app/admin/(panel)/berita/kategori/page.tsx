@@ -68,8 +68,7 @@ export default function AdminKategoriBerita() {
     }
     setAdding(true);
     try {
-      // `slug` is a placeholder: the action derives the real one from the name
-      // and hands it back, and the store keeps what came back.
+      // `slug` is a placeholder; the server derives the real one.
       await saveNewsCategory({
         id: `c_${Date.now()}`,
         name: finalName,
@@ -166,7 +165,6 @@ export default function AdminKategoriBerita() {
         Urutan tab mengikuti urutan daftar ini, dari atas ke bawah.
       </p>
 
-      {/* Add */}
       <form
         onSubmit={add}
         className="glass-rim glass-card mt-6 grid gap-4 rounded-[18px] p-5 sm:grid-cols-[1fr_auto] sm:items-end"
@@ -189,7 +187,6 @@ export default function AdminKategoriBerita() {
         </button>
       </form>
 
-      {/* List */}
       <div className="mt-6 flex flex-col gap-3">
         {/* The built-in first tab, shown for context only. */}
         <div className="glass-rim glass-card flex items-center gap-4 rounded-[16px] px-4 py-3.5 opacity-70">

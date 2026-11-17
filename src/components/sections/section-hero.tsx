@@ -43,10 +43,9 @@ export function SectionHero({
             (1.696em ≈ 78px, 1.087em ≈ 50px at 46px) scale with it.
 
             This is the page's <h1> — the two lines are one heading, split into
-            block spans. Purely a tag swap: Tailwind's preflight gives h1
-            `font-size: inherit; font-weight: inherit` and zeroes every margin,
-            and `block` restores what <p> gave the lines, so it renders
-            identically to the div/p markup it replaces. */}
+            block spans. Tailwind's preflight gives h1 `font-size: inherit;
+            font-weight: inherit` and zeroes every margin, so only the classes
+            here style it. */}
         <h1
           className="relative w-fit [--fs:clamp(1.55rem,5.4vw,45.954px)]"
           style={{ fontSize: "var(--fs)" }}

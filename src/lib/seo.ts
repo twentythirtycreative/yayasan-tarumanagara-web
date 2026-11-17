@@ -5,9 +5,8 @@ import { siteConfig } from "@/lib/site";
  * Per-page metadata for the public pages.
  *
  * Next merges metadata one *field* at a time: a page that only declares `title`
- * inherits the root layout's `alternates`, `openGraph` and `twitter` wholesale.
- * That is how every inner page ended up pointing its canonical URL at the
- * homepage and sharing the homepage's OG card. Each page therefore has to own
+ * inherits the root layout's `alternates`, `openGraph` and `twitter` wholesale,
+ * i.e. the homepage's canonical URL and OG card. Each page therefore has to own
  * all three, and building them from one call keeps them from drifting apart.
  */
 export function pageMetadata({

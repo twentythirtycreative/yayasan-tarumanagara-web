@@ -36,9 +36,7 @@ type Row = typeof schema.news.$inferSelect & {
 };
 
 const toNewsItem = (r: Row): NewsItem => {
-  // Jakarta dateline, press-release style: "Jakarta, 13 Agustus 2025". The
-  // detail page keeps the full string for the article lead and strips the
-  // "Jakarta, " prefix for the plain meta date (see berita/[slug]/page.tsx).
+  // Jakarta dateline, press-release style: "Jakarta, 13 Agustus 2025".
   const date = formatDateId(r.publishedAt, r.dateLabel);
   return {
     slug: r.slug,

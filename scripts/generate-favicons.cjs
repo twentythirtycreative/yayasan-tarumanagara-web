@@ -1,11 +1,10 @@
 // Regenerate the whole favicon set from one source mark.
 // Usage: npm run favicons
 //
-// Why this exists instead of re-running realfavicongenerator: its output shipped
-// a WHITE mark on transparency in every file except favicon-96x96.png. Google
-// reads /favicon.ico, so the SERP showed a white blob on a white plate, and the
-// iOS home-screen icon had the same problem. Everything here carries its own
-// black plate, so the mark reads on any background it lands on.
+// Used instead of realfavicongenerator, whose output put the WHITE mark on
+// transparency, so it vanished on white backgrounds (Google's SERP reads
+// /favicon.ico; the iOS home screen too). Every icon here carries its own black
+// plate, so the mark reads on any background it lands on.
 //
 // Source of truth: scripts/assets/logo-mark.png — the white mark on
 // transparency, 1024px, no plate. Kept out of /public because it is a build
@@ -26,11 +25,7 @@ const mark = (px) =>
     .png()
     .toBuffer();
 
-/**
- * Round icon: black disc, transparent corners, mark at 80% — the framing the
- * one good asset in the old set (favicon-96x96.png) already used, so tabs keep
- * the look they have today.
- */
+/** Round icon: black disc, transparent corners, mark at 80%. */
 async function disc(size) {
   const inner = Math.round(size * 0.8);
   const plate = Buffer.from(
@@ -89,8 +84,8 @@ function ico(images) {
 /**
  * Theme-aware SVG: black disc in a light UI, the bare white mark in a dark one,
  * where a black disc would sink into the browser chrome. Two embedded 512px
- * rasters — the mark has no vector source, and the previous build embedded two
- * 5258px ones, which is how a favicon reached 7.6 MB.
+ * rasters, since the mark has no vector source; keep them small (5258px ones
+ * once made this file 7.6 MB).
  */
 async function themedSvg() {
   const light = (await disc(512)).toString("base64");

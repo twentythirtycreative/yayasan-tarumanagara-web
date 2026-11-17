@@ -28,7 +28,8 @@ export type AdminNewsCategory = {
   name: string;
   /**
    * Filter key for the public tab bar, derived from `name` by the server on
-   * every save — never entered or edited in the panel, and never sent as input.
+   * every save — never entered or edited in the panel; whatever the client
+   * sends here is ignored.
    */
   slug: string;
   /** Ascending = left to right in the public tab bar. */

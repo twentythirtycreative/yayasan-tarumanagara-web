@@ -20,9 +20,10 @@ export async function generateStaticParams() {
   return news.map((n) => ({ slug: n.slug }));
 }
 
-// Resolve a crawlable, absolute OG image URL for the article. Admin covers are
-// stored as `data:` URLs (crawlers can't read those) so those are served via the
-// `/berita/[slug]/cover` route; `/path` covers are used directly; else site OG.
+// Resolve a crawlable, absolute OG image URL for the article. Site-relative
+// covers (`/api/images/<id>` uploads, /public paths) are used directly; legacy
+// inline `data:` covers, which crawlers can't read, go through the
+// `/berita/[slug]/cover` route; anything else gets the site OG image.
 const ogImageFor = (slug: string, cover: string | null): string => {
   if (cover?.startsWith("data:")) return `${siteConfig.url}/berita/${slug}/cover`;
   if (cover?.startsWith("/")) return `${siteConfig.url}${cover}`;
@@ -83,8 +84,8 @@ export default async function BeritaDetailPage({
   // Full dateline incl. the "Jakarta, " prefix (e.g. "Jakarta, 13 Agustus 2025").
   const dateLabel = item.dateLabel;
 
-  // The dateline is prepended automatically (bold) from dateLabel — the stored
-  // content no longer includes "Jakarta, … –" (Figma 298:1300).
+  // The bold dateline is prepended from dateLabel; the stored content doesn't
+  // include "Jakarta, … –" (Figma 298:1300).
   const leadDate = item.dateLabel ? `${item.dateLabel} – ` : "";
   const bodyRest = item.content;
 
@@ -161,7 +162,7 @@ export default async function BeritaDetailPage({
             {/* Below-image content is inset deeper than the image (Figma: body
                 x=397 vs image x=288). */}
             <div className="mx-auto max-w-[660px]">
-              {/* Caption (Figma 298:1302) — italic 15px */}
+              {/* Caption (Figma 298:1302) */}
               {item.caption && (
                 <p className="mt-6 text-[15px] italic leading-[1.5] text-black/70">
                   {item.caption}

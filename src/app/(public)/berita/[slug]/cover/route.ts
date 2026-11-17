@@ -11,13 +11,13 @@ import { siteConfig } from "@/lib/site";
 // route resolves that and serves the bytes itself rather than redirecting: OG
 // and Twitter crawlers are inconsistent about following redirects, and the
 // whole point of this URL is that a crawler can read it in one hop. Legacy
-// inline `data:` covers (rows written before images moved out) are still
-// decoded here so previews keep working until they are migrated. Anything else
-// — a /public path or no cover at all — falls back to the static OG asset.
+// inline `data:` covers (rows written before the `images` table) are still
+// decoded here so their previews keep working. Anything else redirects: a
+// /public path to itself, no cover to the static OG asset.
 //
 // Deliberately not ISR-cached. This route can return a multi-megabyte body, and
 // an ISR entry per slug would put those images in the durable cache. The header
-// below keeps repeat crawls off the function — so a cache miss here costs an
+// below keeps repeat crawls off the function, so a cache miss here costs an
 // invocation, not a billed ISR write.
 const CDN_CACHE =
   // stale-while-revalidate lets the CDN answer instantly and refresh in the

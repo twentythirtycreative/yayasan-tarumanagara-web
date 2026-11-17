@@ -5,8 +5,8 @@
 // table with an inline UNIQUE on `slug` (an sqlite autoindex) but without the
 // named `news_categories_slug_unique` index it expects to find on the next run,
 // so the run after that tried to DROP an index that never existed and failed.
-// The three statements below produce exactly the shape the `news` table already
-// has — inline UNIQUE plus the named index — which push then diffs cleanly.
+// The statements below create the named index and no inline UNIQUE (see the
+// note on `slug`), the shape push expects, so it then diffs cleanly.
 const isProd = process.argv.includes("--prod");
 require("dotenv").config({
   path: isProd ? ".env.production.local" : ".env.development.local",

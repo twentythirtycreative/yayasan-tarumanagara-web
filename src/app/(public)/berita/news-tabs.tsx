@@ -3,16 +3,15 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** One category tab. The `null` slug is reserved for "Semua Berita". */
+/** One category tab (a `news_categories` row). */
 export type NewsTab = { slug: string; name: string };
 
 // Figma 298:1190 — blue bar with clickable tabs; the active one is bold white
 // with a 5px underline, the rest are dimmed.
 //
-// The tabs are data now, not a constant. "Semua Berita" is not a category: it
-// is the unfiltered list, so it is always first and always there even with an
-// empty `news_categories` table. Everything after it is one row of that table,
-// in the order admin arranged them.
+// "Semua Berita" is not a category: it is the unfiltered list, so it is always
+// first and always there even with an empty `news_categories` table. Every
+// other tab is one row of that table, in the order admin arranged them.
 export function NewsTabs({
   categories,
   active,
@@ -43,8 +42,8 @@ export function NewsTabs({
 
   return (
     <div className="w-full bg-gradient-to-r from-[#00357d] to-[#28599c] shadow-[0px_4px_13.8px_rgba(0,0,0,0.07)]">
-      {/* Scrollable on narrow screens: the number of tabs is admin-controlled
-          now, so the bar has to survive more of them than the two Figma drew. */}
+      {/* Scrolls horizontally: the number of tabs is admin-controlled, so the
+          bar has to survive more of them than the two Figma drew. */}
       <div className="site-container flex items-center gap-6 overflow-x-auto [scrollbar-width:none] sm:gap-16 [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => {
           const isActive = tab.slug === active;

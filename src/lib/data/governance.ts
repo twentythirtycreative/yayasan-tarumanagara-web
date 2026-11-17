@@ -19,20 +19,13 @@ export type GovernancePerson = {
 const FALLBACK_PHOTO = "/images/person-3.jpg";
 
 /**
- * Every published member for Tata Kelola Organisasi, grouped by tab and already
- * in display order (left to right). Returns all three keys even when a tab is
- * empty, so the UI can render its tabs without null checks.
- *
- * Cached in the Data Cache (tag "governance"); invalidated when admin writes.
- */
-/**
- * Flat, cached list of published members in display order.
+ * Flat list of published members in display order. Cached in the Data Cache
+ * (tag "governance"); invalidated when admin writes.
  *
  * Returns an array, not a Record keyed by role, even though every caller wants
  * the grouped shape: an object of arrays does not survive `unstable_cache` here
  * — the wrapper hands back the right keys with empty arrays, so the page renders
- * "Belum ada data" while the query underneath is returning rows. Every other
- * cached reader in this codebase (news, jobs) returns an array too. Grouping
+ * "Belum ada data" while the query underneath is returning rows. Grouping
  * happens in `getGovernanceMembers` below, outside the cache boundary.
  */
 const cachedMembers = unstable_cache(
@@ -60,6 +53,11 @@ const cachedMembers = unstable_cache(
   { tags: [CACHE_TAGS.governance], revalidate: false },
 );
 
+/**
+ * Every published member for Tata Kelola Organisasi, grouped by tab and already
+ * in display order (left to right). Returns all three keys even when a tab is
+ * empty, so the UI can render its tabs without null checks.
+ */
 export async function getGovernanceMembers(): Promise<
   Record<GovernanceRole, GovernancePerson[]>
 > {

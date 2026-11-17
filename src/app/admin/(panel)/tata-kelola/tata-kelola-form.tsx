@@ -91,16 +91,20 @@ export function TataKelolaForm({
       name: name.trim(),
       position: position.trim(),
       photoUrl: photoUrl.trim(),
-      // Horizontal is always centred: a portrait upload is narrower than the
-      // card is tall, so object-cover leaves no sideways slack to shift into.
+      // Horizontal is always centred: a portrait photo fills the card's width
+      // under object-cover, so only the vertical axis has slack to shift into.
       photoPosition: `50% ${photoY}%`,
-      // New members go to the end of their tab; moving them is the list's job.
-      // Changing role on an existing member also sends them to the end of the
-      // new tab, since its old index means nothing there.
+      // New members go to the end of their tab, one past the highest position
+      // so a gap left by a delete can't cause a tie; moving them is the list's
+      // job. Changing role on an existing member also sends them to the end of
+      // the new tab, since its old index means nothing there.
       sortOrder:
         initial && initial.role === role
           ? initial.sortOrder
-          : governance.filter((m) => m.role === role).length,
+          : Math.max(
+              -1,
+              ...governance.filter((m) => m.role === role).map((m) => m.sortOrder),
+            ) + 1,
       published,
     };
     const ok = await confirm({
@@ -113,9 +117,8 @@ export function TataKelolaForm({
       onConfirm: async () => {
         try {
           setSaving(true);
-          // Members saved before uploads were downscaled still carry an
-          // oversized data URL, which the form would send back verbatim and the
-          // Server Action would reject. Re-encode it on the way out.
+          // Members saved before uploads were downscaled may still carry an
+          // oversized data URL, which the Server Action's body limit would reject.
           await saveGovernanceMember({
             ...item,
             photoUrl: await shrinkStoredDataUrl(item.photoUrl, PORTRAIT_MAX_EDGE),
@@ -217,8 +220,7 @@ export function TataKelolaForm({
           </p>
           <FieldError message={errors.photoUrl} />
 
-          {/* Only the vertical axis has slack to crop into — see photoPosition
-              in submit() — so a horizontal slider would be a dead control. */}
+          {/* Vertical only — see photoPosition in submit(). */}
           <div className="mt-2 flex flex-col gap-1">
             <label className="text-xs text-ink/60">Geser tegak: {photoY}%</label>
             <input

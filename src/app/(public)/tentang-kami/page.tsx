@@ -24,8 +24,8 @@ export default async function TentangKamiPage() {
         image="/images/about-hero.jpg"
         line1="Dari Warisan Nilai"
         line2="Menciptakan Dampak"
-        // Match the Figma crop + tone (node 364:4357): bottom-anchored, and a
-        // darker, higher-contrast B&W than the bright source photo.
+        // Match the Figma crop + tone (node 364:4357): a darker, higher-contrast
+        // B&W than the bright source photo.
         imageClassName="object-cover object-[center_55%] grayscale brightness-[0.68] contrast-[1.3]"
       />
 
@@ -37,8 +37,7 @@ export default async function TentangKamiPage() {
           of the padding, with the content centred inside; py stays as a floor in
           case the copy wraps to more lines. */}
       <section className="relative flex items-center overflow-hidden py-16 md:min-h-[320px] md:py-10">
-        {/* Figma 40:3565 swapped the stock office block for the Untar tower —
-            the same source we already ship as hero-untar.jpg — and pushed it
+        {/* Figma 40:3565 uses the Untar tower (same source as hero-untar.jpg),
             much darker. Registering the export (1440x359) against the treated
             photo puts the crop at scale 1.40625 with a 400px top offset, i.e.
             object-position 400/596 = 67%, not flush bottom. Figma exports the
@@ -76,7 +75,6 @@ export default async function TentangKamiPage() {
         </div>
       </section>
 
-      {/* Misi */}
       <section className="bg-surface py-20 sm:py-28">
         {/* Figma 376:979 — inset deeper than the global margin (x=204 vs ~122):
             image (422) · 109px gap · text (501). The middle `fr` column is the
@@ -104,10 +102,10 @@ export default async function TentangKamiPage() {
                 <span className="text-[#dadada]">Perubahan</span>
               </h2>
               <ol className="mt-8 list-decimal space-y-5 pl-6 text-body font-medium text-[#262626]">
-                {/* Figma 1:1954 — three points, replacing the previous four.
-                    Figma spells the last value "Enterpreunership"; corrected to
-                    Entrepreneurship, which is how it reads on the beranda hero
-                    and in the Sejarah Tarumanagara card. */}
+                {/* Figma 1:1954. Figma spells the last value
+                    "Enterpreunership"; corrected to Entrepreneurship, which is
+                    how it reads on the beranda hero and in the Sejarah
+                    Tarumanagara card. */}
                 <li>
                   Memfasilitasi aspirasi masyarakat dari semua lapisan dalam
                   bidang pendidikan dan kesehatan yang berkualitas, berbiaya

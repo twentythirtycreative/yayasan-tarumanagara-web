@@ -8,14 +8,12 @@ export async function proxy(req: NextRequest) {
   const isLogin = pathname === "/admin/login";
   const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
 
-  // Not authenticated → force to login (except the login page itself).
   if (!session && !isLogin) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
   }
 
-  // Already authenticated → skip the login page.
   if (session && isLogin) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin";

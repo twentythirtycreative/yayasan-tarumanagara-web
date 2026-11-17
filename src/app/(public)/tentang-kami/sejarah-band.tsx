@@ -21,51 +21,41 @@ import { ArrowUpRight } from "lucide-react";
 // Once a card is open the band is pinned to that story's photo: it sticks to the
 // top of the viewport and the card scrolls over it, which is the only way the
 // three open frames can show the same photo behind 2000px of copy. Collapsed, it
-// goes back to scrolling with the page like any other section.
+// scrolls with the page like any other section.
 const ease = [0.22, 1, 0.36, 1] as const;
 
 type Topic = "candra" | "tarumanagara";
 
 // Each story frames its own photo. Both are cropped by `cover` against the
-// band, and neither has room to spare — candra-naya.jpg is 1734x1192 (1.455)
-// and hero-untar.jpg 1332x882 (1.510) against a 1.466 band, so cover is
-// width-driven and crops vertically, leaving 0px and 43px of horizontal slack.
-// That is why the `object-[12%_50%]` these replace moved nothing at all.
+// band, and neither has room to spare: candra-naya.jpg is 1734x1192 (1.455)
+// and hero-untar.jpg 1332x882 (1.510) against Figma's 1440x982 band (1.466),
+// which leaves 0px and 43px of horizontal slack respectively, so
+// object-position alone can't move either photo sideways.
 //
 // So a sideways shift has to buy its own room, and the price is fixed: moving
 // by s leaves s of the band bare on the far side, and covering it needs
 // (zoom-1)/2 >= s of slack, hence zoom = 1 + 2s. That holds however it is
 // written — transform, oversized layer box, or object-position — so the two
-// numbers always move together.
+// numbers always move together. Mirroring is free: it moves no edge.
+//
+// The mirror is a negative x scale with the same magnitude on y (x alone would
+// stretch the photo), written as two utilities rather than
+// `scale-[N] -scale-x-100`, which would leave x to whichever class Tailwind
+// emitted last.
 const photos: Record<Topic, { src: string; alt: string; frame: string }> = {
   candra: {
     src: "/images/candra-naya.jpg",
     alt: "Rumah Candra Naya, kediaman Mayor Khouw Kim An di kawasan Gajah Mada, Jakarta",
-    // Mirrored, moved right by 5% and sitting at 45% down the source, which
-    // lifts the house clear of the courtyard in the foreground.
-    //
-    // The mirror is free; the sideways shift is what costs the 1.1x, and the
-    // two cannot be set independently — a shift of s strands s of the band on
-    // the far side, so the scale can never go below 1 + 2s. Each step down in
-    // zoom has taken the shift with it: 1.4/20%, then 1.3/15%, now 1.1/5%.
-    // This is the end of that road — 1.0 is a plain cover crop with no
-    // sideways movement available at all.
-    //
-    // Magnitude is written on both axes, x carrying the sign, because scaling
-    // x alone would stretch the house. Two utilities rather than
-    // `scale-[1.1] -scale-x-100`, which would leave x to whichever class
-    // Tailwind emitted last. Nothing in this photo reads as text, so the
-    // mirror shows nothing backwards.
+    // Mirrored, moved right by 5% (hence the 1.1x) and sitting at 45% down the
+    // source, which lifts the house clear of the courtyard in the foreground.
+    // Nothing in this photo reads as text, so the mirror shows nothing
+    // backwards.
     frame: "translate-x-[5%] -scale-x-110 scale-y-110 object-[center_45%]",
   },
   tarumanagara: {
     src: "/images/hero-untar.jpg",
     alt: "Gedung Universitas Tarumanagara",
-    // Mirrored, then moved 10% left of centre. The flip itself is free — it
-    // moves no edge — but the shift is not, so the magnitude goes to 1.2 on
-    // both axes: x carries the sign, y has to match it or the tower stretches.
-    // Written as two utilities rather than `scale-[1.2] -scale-x-100`, which
-    // would leave the x value up to whichever class Tailwind emitted last.
+    // Mirrored, then moved 10% left of centre (hence the 1.2x).
     //
     // The translate is unscaled by the 1.2 — CSS applies the individual
     // `translate` property before `scale` — so it stays 10% of the band, and
@@ -81,16 +71,15 @@ const photos: Record<Topic, { src: string; alt: string; frame: string }> = {
   },
 };
 
-// Figma sets these at 80px; the site caps section headers at text-header (60px)
-// and every other 80px Figma heading on this page already renders through it, so
-// the card titles go through the same token rather than reintroducing a raw size.
+// Figma sets these at 80px; like every other 80px Figma heading, they render
+// through text-header (60px) rather than a raw size.
 const titles: Record<Topic, React.ReactNode> = {
   candra: (
     <>
       <span className="block font-normal italic">Sejarah Singkat</span>
       {/* pb/-mb: bg-clip-text paints the gradient only inside the span's own
-          box, and text-header runs at line-height 1 — so the descender of "y"
-          fell outside it and came out clipped. The padding grows the painted
+          box, and text-header runs at line-height 1, so the descender of "y"
+          would fall outside it and be clipped. The padding grows the painted
           box, the negative margin gives the space back to the layout. Same fix
           as the hero's "Menginspirasi". */}
       <span className="-mb-[0.18em] block bg-gradient-to-r from-[#262626] to-[#8c8c8c] bg-clip-text pb-[0.18em] font-extrabold text-transparent">
@@ -168,28 +157,28 @@ export function SejarahBand() {
   const [cycled, setCycled] = useState<Topic>("candra");
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Open, swap and close all move the card's top a long way — every trigger sits
+  // Opening and swapping both move the card's top a long way — the trigger sits
   // at the bottom of a card that can be 2000px tall — so each one scrolls the
   // band back under the navbar.
   //
-  // This has to run from an effect, not from the click handler, and it has to
-  // measure the <section>, not the card column. Firing it inside the handler
-  // scrolled against the pre-render layout, and the column carries motion's
-  // `layout` prop, so mid-animation it is under a transform and reports a
-  // position that is off by however far the animation has travelled — hence the
-  // scroll landing correctly only some of the time. The section never animates.
+  // This runs from an effect, not the click handler (which would measure the
+  // pre-render layout), and it measures the <section>, not the card column:
+  // the column carries motion's `layout` prop, so mid-animation it is under a
+  // transform and reports a position off by however far the animation has
+  // travelled. The section never animates.
   //
   // One jump isn't enough. The section is only as tall as its card, so the page
   // reflows for most of a second after the click — the exit, the enter and the
   // column's `layout` transition all resize it — and a jump launched into that
   // lands hundreds of pixels short. So it jumps immediately, then re-measures
   // once the layout has settled and corrects if it has drifted.
+  //
   // Guard on the PREVIOUS value of `open`, not a boolean "have I run once" flag.
-  // A `first.current` flag is not Strict-Mode safe: React dev-remounts the
-  // component (effect → cleanup → effect) while the ref survives, so the second
-  // pass sailed through the guard and scrolled the page down to this section the
-  // moment /tentang-kami opened. Comparing values makes that re-run a no-op —
-  // `open` hasn't changed — while every real open/swap/close still scrolls.
+  // Such a flag is not Strict-Mode safe: React dev-remounts the component
+  // (effect → cleanup → effect) while the ref survives, so the second pass
+  // would get past the guard and scroll the page to this section on load.
+  // Comparing values makes that re-run a no-op — `open` hasn't changed — while
+  // every real open or swap still scrolls.
   const prevOpen = useRef<Topic | null | undefined>(undefined);
   useEffect(() => {
     const previous = prevOpen.current;
@@ -219,13 +208,13 @@ export function SejarahBand() {
   // 16:3528): whichever card's centre is nearest the centre of the viewport
   // owns the photo behind it.
   //
-  // "Nearest centre", not an IntersectionObserver on a midline, which is what
-  // this used to be. A midline hands the band over the instant the Tarumanagara
-  // card's top edge crosses it — and at that moment the Candra Naya card still
-  // fills the upper half of the screen, so you are reading "Sejarah Singkat
-  // Candra Naya" over a photo of the Untar tower. Comparing centres moves the
-  // handover to the midpoint between the two cards, where the card you are
-  // actually looking at is the one the band is showing.
+  // "Nearest centre", not an IntersectionObserver on a midline. A midline hands
+  // the band over the instant the Tarumanagara card's top edge crosses it — and
+  // at that moment the Candra Naya card still fills the upper half of the
+  // screen, so you would be reading "Sejarah Singkat Candra Naya" over a photo
+  // of the Untar tower. Comparing centres moves the handover to the midpoint
+  // between the two cards, where the card you are actually looking at is the
+  // one the band is showing.
   const cards = useRef(new Map<Topic, HTMLElement>());
   const watchCard = useCallback((node: HTMLDivElement) => {
     const topic = node.dataset.topic as Topic;
@@ -236,8 +225,7 @@ export function SejarahBand() {
   }, []);
 
   useEffect(() => {
-    // An open card pins the band to its own story, so there is nothing to track
-    // until the collapsed pair is back.
+    // An open card pins the band to its own story, so there is nothing to track.
     if (open !== null) return;
     let frame = 0;
     const pick = () => {
@@ -255,10 +243,8 @@ export function SejarahBand() {
       }
       if (nearest) setCycled(nearest);
     };
-    // Deferred to a frame rather than called here, both to let the collapsed
-    // pair finish mounting — AnimatePresence runs in `wait` mode, so it lands a
-    // beat after `open` clears — and to keep the state write out of the effect
-    // body itself.
+    // Deferred to a frame rather than called here: scroll events coalesce into
+    // one pick per frame, and the state write stays out of the effect body.
     const onScroll = () => {
       frame ||= requestAnimationFrame(pick);
     };
@@ -272,8 +258,7 @@ export function SejarahBand() {
     };
   }, [open]);
 
-  // Opening or swapping pins the band to that story, and leaves it there when
-  // the card closes — until the next scroll hands it back to the observer.
+  // Opening or swapping pins the band to that story.
   const show = (topic: Topic) => {
     setCycled(topic);
     setOpen(topic);
@@ -283,14 +268,9 @@ export function SejarahBand() {
 
   return (
     // The band is one photo. Collapsed it scrolls with the page like any other
-    // section, sized to its cards — a screen tall from md up, only as tall as
-    // it needs to be below that. Open, it goes sticky and stays put, one screen
-    // at every width, while the card — 2014px of it, for Tarumanagara —
-    // travels across a photo that never moves, and only leaves once the section
-    // does.
-    //
-    // The two states hang the photo differently, because they want opposite
-    // things from it.
+    // section, sized to its cards. Open, it goes sticky and stays put while the
+    // card — 2014px of it, for Tarumanagara — travels across a photo that never
+    // moves, and only leaves once the section does.
     //
     // Open, sticky means the band has to be in flow, which is what --band is
     // for: the band is that tall, the card column is pulled back over it by
@@ -304,64 +284,50 @@ export function SejarahBand() {
     //
     // Collapsed there is nothing to pin, so the photo comes out of flow and
     // fills the section instead — `absolute inset-0`, so it is exactly as tall
-    // as the section however tall the two cards make it. That is what --band
-    // could not do: as a fixed height it was a ceiling on the photo but not on
-    // the cards, and the pair plus the top padding already runs past one screen
-    // at common viewport heights, so the overflow came out as a white strip
-    // under the photo and cards drifting toward Visi. Now --band is at most a
-    // floor (min-h, and only from md up) and the photo follows the content
-    // from there.
-    //
-    // With the photo out of flow the padding can go on the section, the same
-    // clamp top and bottom, and the cards centre inside it — so the two boxes
-    // sit evenly in the photo at every height rather than 142px down from the
-    // top and flush against the bottom.
+    // as the section however tall the two cards make it. A fixed-height band
+    // would cap the photo but not the cards, and the pair plus the top padding
+    // already runs past one screen at common viewport heights, leaving a white
+    // strip under the photo. With the photo out of flow the padding goes on the
+    // section, the same clamp top and bottom, and the cards centre inside it.
     //
     // z-20, not z-10: the Visi section that follows is `relative` with no
     // z-index of its own, so it never opens a stacking context and its inner
-    // z-10 text column lands in the root one. At z-10 that column tied with this
-    // section and won on DOM order, printing Visi's paragraph through the card
-    // while it animates in and out. Stays under the navbar's z-50.
+    // z-10 text column lands in the root one. At z-10 that column would tie
+    // with this section and win on DOM order, printing Visi's paragraph through
+    // the card while it animates in and out. Stays under the navbar's z-50.
     <section
       ref={sectionRef}
-      // One screen tall, replacing Figma's fixed 982px (and the vw clamp that
-      // tracked it).
+      // One screen tall, in place of Figma's fixed 982px.
       //
       // lvh — the viewport with the mobile toolbars retracted — and not dvh or
       // svh. dvh resizes as the toolbar collapses, and since the card column is
       // pulled up by exactly this height, a unit that changes mid-scroll drags
-      // the cards with it. svh is stable but it is the SMALLEST viewport, i.e.
-      // shorter than what you are actually looking at the moment the toolbar
-      // retracts: the pinned band then stopped ~50px above the bottom of the
-      // screen and the white page surface showed through under the photo for
+      // the cards with it. svh is stable but it is the SMALLEST viewport, so
+      // once the toolbar retracts the pinned band stops ~50px above the bottom
+      // of the screen and the page surface shows through under the photo for
       // the whole of an open card. lvh is stable AND never shorter than the
       // visible area, so the band always reaches the bottom edge; the cost is
       // only that its last strip sits below the fold while the toolbar is out,
       // which cover simply crops. (Tailwind v4 already needs a browser newer
       // than lvh's support.)
       style={{ "--band": "100lvh" } as React.CSSProperties}
-      // The one-screen floor is a floor, not a height: an open card is far
-      // taller and the section grows past the photo onto the page surface,
-      // which is what keeps Visi below the card. Who needs the floor depends on
-      // the state, so each branch asks for it separately.
+      // --band is a floor, not a height: an open card is far taller and the
+      // section grows past the photo onto the page surface, which is what keeps
+      // Visi below the card. Each state asks for the floor separately.
       //
       // Open, always — that is the pinned band, and it has to be a screen tall
       // at every width for the card to have something to travel across.
       //
-      // Collapsed, only from md up. On a desktop the floor is the point: the
-      // cards are a 727px column against the right half, so the photo needs the
-      // height to read as a full-bleed band at all. On a phone they are
-      // full-width blocks stacked with 48px of padding, so the photo is almost
-      // entirely behind them either way and the floor buys nothing but empty
-      // screen — a viewport of dead space before Visi. Below md the section is
-      // just as tall as the two cards need, and only grows to a screen when a
-      // card opens and there is actually something to scroll past.
+      // Collapsed, only from md up. On a desktop the cards are a 727px column
+      // against the right half, so the photo needs the height to read as a
+      // full-bleed band at all. On a phone they are full-width blocks stacked
+      // with 48px of padding, so the photo is almost entirely behind them and
+      // the floor would only add a viewport of dead space before Visi.
       //
-      // Collapsed also carries the padding and centres the cards in what is
-      // left. justify-center is not redundant with the symmetric padding: the
-      // padding only balances the two ends once the content is the thing
-      // setting the height, and above md the floor can still leave slack the
-      // cards would otherwise take entirely at the bottom.
+      // justify-center is not redundant with the symmetric padding: the padding
+      // only balances the two ends once the content sets the height, and above
+      // md the floor can still leave slack the cards would otherwise take
+      // entirely at the bottom.
       className={`relative z-20 scroll-mt-[100px] bg-surface ${
         open === null
           ? "flex flex-col justify-center py-[clamp(48px,9.9vw,142px)] md:min-h-[var(--band)]"
@@ -383,7 +349,7 @@ export function SejarahBand() {
           // A plain CSS transition rather than a motion.div: nothing mounts or
           // unmounts here, only two opacities flip, and that is all a
           // transition needs. It also keeps the scroll-driven swap off the same
-          // animation runtime as the card open/close.
+          // animation runtime as the card open/swap.
           <div
             key={topic}
             aria-hidden={active !== topic}
@@ -396,13 +362,12 @@ export function SejarahBand() {
               alt={photos[topic].alt}
               fill
               sizes="100vw"
-              // Framing is per-photo; see `photos` for each one and what it
-              // costs. The vertical half of it — the object-position — is the
-              // free half: cover is width-driven against a band this wide, so
-              // all the overflow is vertical and there is slack sitting there
-              // either way. The percentage is where the window sits in the
-              // source, so 0% is its top edge and drops the photo as low as it
-              // will go, and raising the number lifts the photo back up.
+              // Framing is per-photo; see `photos`. The object-position half is
+              // free: cover is width-driven against a band this wide, so the
+              // overflow is vertical and there is slack there either way. The
+              // percentage is where the window sits in the source: 0% is its
+              // top edge and drops the photo as low as it will go; higher
+              // values lift it back up.
               className={`${photos[topic].frame} object-cover`}
             />
           </div>
@@ -425,7 +390,7 @@ export function SejarahBand() {
       >
         {/* Figma puts the cards at x=624..1351 of 1440 — a 727px column hugging
             the right. Below md they take the full width instead of sitting in a
-            column too narrow to hold an 80px heading. */}
+            column too narrow to hold the heading. */}
         <motion.div
           layout
           transition={{ duration: 0.5, ease }}
@@ -494,15 +459,13 @@ export function SejarahBand() {
                     control on an open card: the prototype cycles between the
                     two forever and never returns to the two-card view, so
                     there is no close.
-                    Alignment goes by the pill's own label, not by the card it
-                    sits on, and the pill always names the *other* story: the
-                    "Sejarah Tarumanagara" pill is the one on the Candra Naya
-                    card, and it goes right; the "Sejarah Candra Naya" pill sits
-                    on the Tarumanagara card and goes left. That lands exactly
-                    on Figma, which right-aligns 16:3405 and left-aligns
-                    16:3756. So the pill does change sides when you swap — which
-                    is useful, being the one moving part that tells you the card
-                    underneath actually changed. */}
+                    The pill always names the *other* story and is aligned by
+                    its own label: "Sejarah Tarumanagara" (on the Candra Naya
+                    card) goes right, "Sejarah Candra Naya" (on the Tarumanagara
+                    card) goes left, as Figma right-aligns 16:3405 and
+                    left-aligns 16:3756. Changing sides on swap is useful: it is
+                    the one moving part that tells you the card underneath
+                    actually changed. */}
                 <div
                   className={`mt-10 flex ${open === "candra" ? "justify-end" : ""}`}
                 >
@@ -512,8 +475,7 @@ export function SejarahBand() {
                     className={`${pillClass} cursor-pointer gap-3 pl-[29px] pr-[7px] hover:scale-[1.03]`}
                   >
                     {shortLabels[open === "candra" ? "tarumanagara" : "candra"]}
-                    {/* Figma 16:3760 — 36px puck, its own faint glass gradient
-                        and a 4/4.1 shadow at 7%, around a 24px arrow. */}
+                    {/* Figma 16:3760 — arrow puck. */}
                     <span className="glass-rim grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(132deg,rgba(237,245,255,0.46)_58.52%,rgba(255,255,255,0)_99.225%)] shadow-[0px_4px_4.1px_rgba(0,0,0,0.07)]">
                       <ArrowUpRight className="h-6 w-6" />
                     </span>

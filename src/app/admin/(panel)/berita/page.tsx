@@ -207,8 +207,7 @@ function NewsRowActions({ item }: { item: NewsItem }) {
   );
 }
 
-// Filter value standing in for "no category at all" — categories are rows now,
-// so their absence needs a key of its own.
+// Filter value for uncategorised articles (stored categoryId "").
 const NO_CATEGORY = "__none__";
 
 export default function AdminBeritaList() {
@@ -274,7 +273,6 @@ export default function AdminBeritaList() {
         </div>
       </div>
 
-      {/* Search + filter */}
       <div className="mt-6 flex items-center gap-3">
         <div className="glass-rim glass-card flex w-full items-center gap-2 rounded-xl px-3.5 sm:max-w-sm">
           <Search className="h-4 w-4 text-ink/40" />

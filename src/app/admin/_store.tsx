@@ -78,9 +78,8 @@ export function AdminStoreProvider({
   useEffect(() => {
     let active = true;
     (async () => {
-      // allSettled, not all: these are independent, and with Promise.all a
-      // single rejection left every section empty — the whole panel looked blank
-      // because one query failed. Each list now fails on its own.
+      // allSettled, not all: the lists are independent, so one failed query
+      // must not blank every section.
       //
       // A list the role can't reach isn't requested at all: `requireSection`
       // would reject it server-side, and that rejection is expected, not a
@@ -131,7 +130,7 @@ export function AdminStoreProvider({
     saveNews: async (n) => {
       const res = await api.saveNews(n);
       if (res?.error) throw new Error(res.error);
-      // Optimistic local update (avoids depending on cache freshness).
+      // Mirror the saved row locally instead of refetching the list.
       setNews((prev) =>
         prev.some((x) => x.id === n.id)
           ? prev.map((x) => (x.id === n.id ? n : x))
@@ -168,7 +167,7 @@ export function AdminStoreProvider({
       await api.deleteNewsCategory(id);
       setNewsCategories((prev) => prev.filter((x) => x.id !== id));
       // The action un-files every article in the category; mirror that locally
-      // so the Berita list doesn't keep showing a tab that no longer exists.
+      // so those articles read as uncategorised without a reload.
       setNews((prev) =>
         prev.map((x) => (x.categoryId === id ? { ...x, categoryId: "" } : x)),
       );

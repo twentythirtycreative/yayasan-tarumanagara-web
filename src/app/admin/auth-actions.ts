@@ -91,14 +91,18 @@ export async function login(
     return { error: "Email atau kata sandi salah." };
   }
 
-  // Success → clear the failure counter for this email.
+  // Fail closed: a stored role the app doesn't recognise (only possible if the
+  // row was edited outside the app) is refused rather than mapped to a guess.
+  if (!isAdminRole(user.role)) {
+    return { error: "Akun ini tidak memiliki peran yang valid. Hubungi Admin Master." };
+  }
+
   await clearAttempts(email);
 
   const token = await signSession({
     sub: user.id,
     email: user.email,
-    // Rows written before the `role` column existed read back as null.
-    role: isAdminRole(user.role) ? user.role : "master",
+    role: user.role,
   });
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {

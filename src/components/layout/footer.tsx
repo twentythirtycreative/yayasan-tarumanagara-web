@@ -11,13 +11,11 @@ const socials = [
   { label: "YouTube", href: siteConfig.social.youtube, icon: "/images/social/youtube.png" },
 ];
 
-// "Ekosistem" — one heading over two sub-columns (client's footer layout,
-// Aug 2026). The second sub-column has no heading of its own; it starts level
-// with the first link of the first one. The design spells these
-// "Tarumanegara"; corrected to "Tarumanagara" here at the client's request.
-// Each link opens the unit's own site, read from the homepage unit cards
-// (lib/site.ts `units`) so the two can't drift apart again — the footer kept
-// pointing at Google Maps after the cards had moved to the units' websites.
+// "Ekosistem" links, in the two sub-columns of the client's footer layout
+// (Aug 2026). The design spells these "Tarumanegara"; corrected to
+// "Tarumanagara" here at the client's request. Each link opens the unit's own
+// site, read from the homepage unit cards (lib/site.ts `units`) so the two
+// can't drift apart.
 const unitCards = units.flatMap((u): readonly UnitCard[] => u.cards);
 
 function unitSite(title: UnitCard["title"]): string {

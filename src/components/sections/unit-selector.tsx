@@ -7,10 +7,9 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
 import { units } from "@/lib/site";
 
-// Figma 342:1167 — the highlight card next to the unit list. Selecting a unit
-// swaps the card to that unit's dummy content.
+// Figma 342:1167 — the unit list with the selected unit's member cards beside
+// it. Selecting a unit swaps in that unit's cards.
 export function UnitSelector() {
-  // Initial selection: "Unit Pendidikan".
   const [selected, setSelected] = useState("pendidikan");
   const activeUnit = units.find((u) => u.slug === selected) ?? units[0];
 

@@ -1,16 +1,16 @@
 /**
  * Browser-side downscale + re-encode for admin image uploads.
  *
- * Photos are stored as base64 data URLs in Turso TEXT columns and get there
- * through a Server Action, whose request body Next caps (1 MB by default, see
- * `serverActions.bodySizeLimit` in next.config.ts — and Vercel refuses anything
- * over 4.5 MB regardless). base64 inflates a file ~33%, so an untouched 1 MB
- * phone photo already overshoots the default cap and the action fails before it
- * runs, surfacing as an opaque "error occurred in the Server Components render".
+ * Photos travel to a Server Action as base64 data URLs (the server then stores
+ * them as BLOBs, see `lib/images.ts`). Next caps that request body (1 MB by
+ * default, see `serverActions.bodySizeLimit` in next.config.ts — and Vercel
+ * refuses anything over 4.5 MB regardless). base64 inflates a file ~33%, so an
+ * untouched phone photo easily overshoots the cap and the action fails before
+ * it runs, surfacing as an opaque "error occurred in the Server Components render".
  *
- * Shrinking at the source keeps the payload small, the DB rows small, and the
- * public pages fast — the cards these photos land in are a few hundred pixels
- * wide, so nothing is lost.
+ * Shrinking at the source keeps the payload small, the stored blobs small, and
+ * the public pages fast — the cards these photos land in are a few hundred
+ * pixels wide, so nothing is lost.
  *
  * Browser-only: uses canvas. Call from client components.
  */
@@ -26,9 +26,10 @@ export const PORTRAIT_MAX_EDGE = 1665;
 export const COVER_MAX_EDGE = 1920;
 
 /**
- * Above this, a stored data URL is re-encoded on save. Existing rows were
- * written before downscaling existed and would otherwise stay un-editable:
- * the form sends the photo back untouched even when only the name changed.
+ * Above this, a data URL still stored inline in a row (written before uploads
+ * were downscaled) is re-encoded on save. The form sends the photo back
+ * untouched even when only the name changed, so an oversized one would
+ * otherwise fail the body limit and leave the row un-editable.
  */
 const REENCODE_ABOVE_BYTES = 1_000_000;
 

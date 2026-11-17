@@ -1,7 +1,7 @@
 /**
  * Admin RBAC — three account types, four guarded sections.
  *
- * Lives on its own (no server imports) because every layer needs it: the edge
+ * Lives on its own (no server imports) because every layer needs it: the
  * proxy, the server actions' guard, the DB schema's enum, and the client panel
  * that hides what the signed-in role can't reach.
  */
@@ -32,10 +32,6 @@ export function isAdminRole(value: unknown): value is AdminRole {
 
 export function can(role: AdminRole, section: AdminSection): boolean {
   return ACCESS[role].includes(section);
-}
-
-export function sectionsFor(role: AdminRole): readonly AdminSection[] {
-  return ACCESS[role];
 }
 
 /**

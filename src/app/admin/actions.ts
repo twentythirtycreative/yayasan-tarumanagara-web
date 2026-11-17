@@ -20,13 +20,9 @@ import type {
 
 // Invalidate the Data Cache + affected public routes after a write.
 //
-// One `updateTag` per domain is the whole job. Next stamps the tags collected
-// during a render onto the route's prerender entry, so the "news" tag reaches
-// the cached query *and* every page built from it — /, /berita, /berita/[slug],
-// /sitemap.xml (see `x-next-cache-tags` in .next/server/app/*.meta). The
-// `revalidatePath` calls that used to sit here named those same routes by hand:
-// redundant, and one of them ("/berita/[slug]", "page") swept every article page
-// on any single-article edit.
+// One `updateTag` per domain is the whole job: the tag also reaches every page
+// built from the cached query (for "news": /, /berita, /berita/[slug],
+// /sitemap.xml), so no `revalidatePath` is needed — see `src/lib/cache.ts`.
 //
 // updateTag (not revalidateTag) because these run inside Server Actions and the
 // admin must see the change on the next request, not stale-while-revalidate.
@@ -70,11 +66,10 @@ const toAdminJob = (r: JobRow): AdminJob => ({
 
 // ── Berita ────────────────────────────────────────────────────────────────
 // The admin lists below are deliberately uncached. The panel is a handful of
-// signed-in users, it must show what was just written, and `_store.tsx` already
-// updates optimistically — so a Data Cache entry bought nothing while adding a
-// failure mode: an oversized payload makes `unstable_cache` throw on write, and
-// one rejected list empties the whole panel. Public reads stay cached in
-// `src/lib/data/*` (tags below still invalidate them).
+// signed-in users, it must show what was just written, and `_store.tsx` mirrors
+// each write locally anyway — so a Data Cache entry would only add a failure
+// mode (`unstable_cache` throws on write when a payload is oversized). Public
+// reads stay cached in `src/lib/data/*`; the writes below still invalidate them.
 export async function listNews(): Promise<AdminNews[]> {
   await requireSection("berita");
   const rows = await db
@@ -226,6 +221,7 @@ export async function saveNewsCategory(
       id: schema.newsCategories.id,
       name: schema.newsCategories.name,
       slug: schema.newsCategories.slug,
+      sortOrder: schema.newsCategories.sortOrder,
     })
     .from(schema.newsCategories);
   const others = existing.filter((c) => c.id !== item.id);
@@ -238,20 +234,20 @@ export async function saveNewsCategory(
 
   // Distinct names can still reduce to the same slug ("Media Untar" vs "Media,
   // Untar"), and a name of pure punctuation reduces to nothing at all — so the
-  // derived key gets a fallback and a numeric suffix until it is free. Names
-  // are already known unique here, so this loop always terminates.
+  // derived key gets a fallback and a numeric suffix until it is free.
   const base = slugify(name) || "kategori";
   let slug = base;
   for (let i = 2; others.some((c) => c.slug === slug); i++) slug = `${base}-${i}`;
 
-  // New rows land at the end of the tab bar. `length`, not max+1: the move
-  // action renumbers densely, so the row count IS the next free position.
+  // New rows go to the end of the tab bar: one past the highest position, so a
+  // gap left by a delete can't make the new row tie with the last one.
   const isNew = !existing.some((c) => c.id === item.id);
+  const nextPosition = Math.max(-1, ...existing.map((c) => c.sortOrder)) + 1;
   const values = {
     id: item.id,
     name,
     slug,
-    sortOrder: isNew ? existing.length : item.sortOrder,
+    sortOrder: isNew ? nextPosition : item.sortOrder,
   };
   await db
     .insert(schema.newsCategories)
@@ -290,9 +286,8 @@ export async function deleteNewsCategory(id: string): Promise<void> {
  * Move a category one place left/right in the tab bar, returning the new id
  * order so the client can reconcile.
  *
- * Renumbers the whole list densely rather than swapping two values: rows that
- * predate any ordering all share the default 0, and swapping equal numbers
- * moves nothing.
+ * Renumbers the whole list densely rather than swapping two values: tied
+ * sortOrders (ordered by name) would swap equal numbers and move nothing.
  */
 export async function moveNewsCategory(
   id: string,
@@ -520,8 +515,7 @@ export async function moveGovernanceMember(
 }
 
 // ── Lamaran ───────────────────────────────────────────────────────────────
-// Not cached: admin-only, low traffic, and freshness matters (new CV submits
-// must appear immediately).
+// Uncached like the other admin lists: new CV submits must appear immediately.
 export async function listApplications(): Promise<Application[]> {
   await requireSection("lamaran");
   // Intentionally omit the CV blob from the list query.

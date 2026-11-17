@@ -82,12 +82,11 @@ export default function AdminDashboard() {
   ].filter((s) => s.show);
 
   // Below xl the row is 2-up for everyone, so a short row still fills it. At xl
-  // a master's four cards are (100% - 3*16px)/4 = 276px wide, and hard-coding
-  // xl:grid-cols-4 for a role with two cards would stretch them to double that
-  // — same grid, visibly different card. Narrowing the grid to exactly the span
-  // those N tracks would occupy keeps every role's card 276px, left-aligned
-  // with the panels below: 2 cards = 2*276+16 = calc(50% - 0.5rem), 3 cards =
-  // 3*276+32 = calc(75% - 0.25rem).
+  // a master's four cards are (100% - 3*16px)/4 wide (276px at max-w-6xl); a
+  // role with fewer cards in a matching xl:grid-cols-N would get wider cards.
+  // Narrowing the grid to exactly the span of N such tracks keeps every role's
+  // cards the same width, left-aligned with the panels below:
+  // 2 cards = calc(50% - 0.5rem), 3 cards = calc(75% - 0.25rem).
   const statGrid =
     stats.length >= 4
       ? "xl:grid-cols-4"
@@ -110,8 +109,7 @@ export default function AdminDashboard() {
           <p className="mt-1 text-sm text-ink/60">{SUBTITLE[role]}</p>
         </div>
 
-        {/* Admin avatar — hidden on mobile, where the top-right slot is taken by
-            the floating menu (hamburger) button instead. */}
+        {/* Admin avatar — desktop (lg+) only. */}
         <div className="hidden shrink-0 items-center gap-3 lg:flex">
           <span className="hidden text-right sm:block">
             <span className="block text-xs text-ink/50">{ROLE_LABELS[role]}</span>
@@ -131,7 +129,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stat cards */}
       <div className={`mt-6 grid grid-cols-2 gap-4 ${statGrid}`}>
         {stats.map((s) => (
           <div key={s.label} className="glass-rim glass-card rounded-[18px] p-5">
@@ -145,7 +142,6 @@ export default function AdminDashboard() {
       </div>
 
       <div className={`mt-8 grid gap-6 ${panelCount > 1 ? "lg:grid-cols-2" : ""}`}>
-        {/* Recent berita */}
         {showNews && (
         <section className="glass-rim glass-card rounded-[18px] p-5">
           <div className="flex items-center justify-between">
@@ -179,7 +175,6 @@ export default function AdminDashboard() {
         </section>
         )}
 
-        {/* Recent lamaran */}
         {showApplications && (
         <section className="glass-rim glass-card rounded-[18px] p-5">
           <div className="flex items-center justify-between">
@@ -221,8 +216,6 @@ export default function AdminDashboard() {
         </section>
         )}
 
-        {/* HR-only panels have no berita list to pair with, so the Lowongan
-            shortcut fills the second column instead. */}
         {showJobsPanel && (
           <section className="glass-rim glass-card rounded-[18px] p-5">
             <div className="flex items-center justify-between">

@@ -194,7 +194,6 @@ export function CvForm({
       }}
       className="flex flex-col gap-7"
     >
-      {/* Row 1 — Nama Lengkap + Alamat Email */}
       <div className="grid gap-x-[68px] gap-y-7 sm:grid-cols-2">
         <Field
           label="Nama Lengkap"
@@ -212,7 +211,6 @@ export function CvForm({
         />
       </div>
 
-      {/* Nomor Telepon — glass country-code dropdown + number */}
       <div className="flex flex-col gap-3">
         <label className={labelCls}>Nomor Telepon</label>
         <div
@@ -257,7 +255,6 @@ export function CvForm({
         onValueChange={revalidate}
       />
 
-      {/* Posisi yang Dilamar — glass dropdown */}
       <div className="flex flex-col gap-3">
         <label className={labelCls}>Posisi yang Dilamar</label>
         <GlassSelect
@@ -279,7 +276,6 @@ export function CvForm({
         <FieldError message={errors.position} />
       </div>
 
-      {/* Unggah CV Anda — glass Choose File button */}
       <div className="flex flex-col gap-3">
         <label className={labelCls}>Unggah CV Anda</label>
         <div className="flex items-center gap-3">

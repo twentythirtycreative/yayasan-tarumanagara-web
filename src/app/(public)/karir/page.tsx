@@ -83,7 +83,6 @@ export default async function KarirPage() {
         overlayClassName="bg-black/45"
       />
 
-      {/* Jobs */}
       <section className="relative overflow-hidden py-20 sm:py-28">
         {/* Decorative radial glows (Figma 222:755 / 255:11 top-right, 222:757
             left-centre) — #14478C fading to transparent at the circle edge. */}

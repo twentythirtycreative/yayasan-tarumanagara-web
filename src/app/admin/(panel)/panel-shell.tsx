@@ -161,7 +161,7 @@ export default function PanelShell({
     <AdminStoreProvider role={role}>
       <ConfirmProvider>
       <div className="relative min-h-screen overflow-x-clip bg-white">
-        {/* Background accent image (same as the Berita & Kegiatan hero), covering
+        {/* Background accent image (the Tentang Kami hero photo), covering
             ~top half and fading to transparent — pure accent, glows stay visible */}
         <div
           aria-hidden

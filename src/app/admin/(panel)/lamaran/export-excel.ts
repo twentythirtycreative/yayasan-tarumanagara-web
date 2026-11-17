@@ -57,7 +57,6 @@ export async function exportApplicationsExcel(
     right: { style: "thin" as const, color: { argb: BORDER } },
   };
 
-  // Header row — brand fill, white bold text.
   const header = ws.getRow(1);
   header.height = 40;
   header.eachCell((cell) => {
@@ -67,10 +66,9 @@ export async function exportApplicationsExcel(
     cell.border = thin;
   });
 
-  // "Unduh CV" header carries a small caption explaining the access control:
-  // the link only works for a signed-in admin. This is a security safeguard —
-  // CVs contain applicants' personal data, so they are never publicly reachable
-  // even if this spreadsheet is forwarded to someone else.
+  // The "Unduh CV" header carries a caption saying the links need an admin
+  // login: CVs hold applicants' personal data, so they stay unreachable even if
+  // this spreadsheet is forwarded.
   const cvHeader = header.getCell("cv");
   cvHeader.value = {
     richText: [

@@ -16,6 +16,5 @@
 export const CACHE_TAGS = {
   news: "news",
   jobs: "jobs",
-  applications: "applications",
   governance: "governance",
 } as const;

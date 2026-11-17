@@ -98,8 +98,6 @@ export default async function BeritaPage() {
         </div>
       </section>
 
-      {/* Tab bar + the grid it filters — "Semua Berita" plus one tab per row of
-          `news_categories`. */}
       <NewsBrowser items={news} categories={categories} />
     </>
   );

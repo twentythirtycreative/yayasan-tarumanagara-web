@@ -7,10 +7,10 @@ export const siteConfig = {
   description:
     "Yayasan Tarumanagara: Lembaga nirlaba sejak 1959 yang berdedikasi melayani masyarakat di bidang pendidikan, kesehatan, dan pengabdian.",
   /**
-   * Share-card image (1200x630). The filename carries a version because Meta
-   * caches a preview image by its URL: republishing different bytes at the same
-   * path leaves WhatsApp showing the copy it already has, no matter how many
-   * times the page URL is busted with a query string.
+   * Share-card image (1200x630). Meta caches a preview image by its URL, so
+   * republishing different bytes at the same path leaves WhatsApp showing the
+   * copy it already has, however the page URL is cache-busted. To change the
+   * image, publish it under a new filename.
    */
   ogImage: "/images/og-hero.jpg",
   foundationLabel: "Tarumanagara Foundation 2026©",
@@ -60,8 +60,7 @@ export const navLinks = [
 ] as const;
 
 /** Business units shown under "Unit di Dalam Ekosistem Kami" on the homepage.
- *  `cards` holds each unit's member institutions (max 3, from Figma). When a
- *  unit has a single card it is left-aligned, not pushed to the right.
+ *  `cards` holds each unit's member institutions (max 3, from Figma).
  *  `locations` (Figma 542:1075 et al) renders one pin + site line per entry
  *  under the card title — Universitas Tarumanagara is the only card with two.
  *  Each location carries the Google Maps link for that site; the card's
@@ -152,7 +151,3 @@ export const units = [
 
 export type Unit = (typeof units)[number];
 export type UnitCard = Unit["cards"][number];
-
-/** Tags available for news / activities. */
-export const newsTags = ["Kemitraan Strategis", "Kegiatan", "Berita"] as const;
-export type NewsTag = (typeof newsTags)[number];

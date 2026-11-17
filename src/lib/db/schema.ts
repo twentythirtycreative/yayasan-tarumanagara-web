@@ -12,10 +12,9 @@ const uuid = () => crypto.randomUUID();
  * row keeps only a short reference — "/api/images/<id>", served by
  * `app/api/images/[id]/route.ts`.
  *
- * They used to sit inline in the owning row as a base64 `data:` URL, which put
- * ~3.5 MB of image into every cached list payload: past the Data Cache's 2 MB
- * per-item ceiling, so `unstable_cache` threw on write and the admin panel came
- * up empty. Keeping the bytes out of the row keeps those payloads in kilobytes.
+ * Keeping the bytes out of the owning row keeps cached list payloads in
+ * kilobytes. Inline base64 images push a list past the Data Cache's 2 MB
+ * per-item ceiling, and `unstable_cache` then throws on write.
  *
  * Rows are immutable: replacing a photo inserts a new id and deletes the old
  * row, which is what lets the route serve them with a long immutable max-age.

@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { isAdminRole, type AdminRole } from "./roles";
 
-// Edge-safe (used by middleware + server actions). No next/headers here.
+// Shared by the proxy (src/proxy.ts) and server code, so callers pass the token
+// in. No next/headers here.
 export const SESSION_COOKIE = "admin_session";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
@@ -24,13 +25,11 @@ export async function verifySession(
   if (!token || !process.env.AUTH_SECRET) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return {
-      sub: String(payload.sub),
-      email: String(payload.email),
-      // Tokens issued before RBAC carry no role. The only account that existed
-      // then is the all-access one, so treat a missing claim as "master".
-      role: isAdminRole(payload.role) ? payload.role : "master",
-    };
+    // Fail closed: a token without a recognised role grants no access, rather
+    // than a guessed one. The holder simply has to sign in again.
+    const role = payload.role;
+    if (!isAdminRole(role)) return null;
+    return { sub: String(payload.sub), email: String(payload.email), role };
   } catch {
     return null;
   }
