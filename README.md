@@ -81,6 +81,7 @@ The panel is available at `/admin` and requires an authenticated account.
 | `/admin/tata-kelola` | Manage the governance roster: name, position, portrait, portrait crop, role, display order, and visibility. | `master` |
 | `/admin/lowongan` | Create, edit, open or close, and delete job vacancies. | `master`, `hr` |
 | `/admin/lamaran` | Review job applications, search and filter them, download CV files, and export the filtered list to an Excel workbook. | `master`, `hr` |
+| `/admin/akun` | Change your own password. The Admin Master can also reset the password of any other account. | All roles |
 
 ---
 
@@ -277,6 +278,7 @@ The script reads the source database without modifying it and writes a local SQL
 - Administrators sign in at `/admin/login` with an email address and password stored in `admin_users`.
 - Passwords are hashed with scrypt using a random salt and compared in constant time.
 - A successful sign-in sets the `admin_session` cookie, which contains a JWT signed with `AUTH_SECRET` (HS256). The cookie is `httpOnly`, `SameSite=Lax`, marked `Secure` in production, and expires after **7 days**.
+- The token also carries a fingerprint of the account's password hash. `requireAdmin()` compares it with the database on every request, so **changing or resetting a password ends every other session of that account** immediately. The same happens when an account is re-created with `create-admin` or removed. A browser whose session has ended this way is sent to `/admin/sesi-berakhir`, which clears the cookie and opens the sign-in page.
 - After **5 failed attempts** for the same email address, further attempts are refused for **15 minutes**. The counters are stored in the database so that the limit holds across Vercel's serverless instances.
 
 ### Roles
@@ -298,6 +300,13 @@ Access is enforced at three levels:
 3. The panel's navigation shows only the sections available to the current role.
 
 ### Managing accounts
+
+Passwords are managed in the panel under **Akun** (`/admin/akun`):
+
+- Every administrator can change their own password. The current password is required, and the new one must be at least 8 characters.
+- The Admin Master can also set a new password for any other account, for example when its owner has forgotten it or has left. This also lifts any sign-in lockout on that account.
+
+Creating accounts, removing them, and changing roles are done from the command line:
 
 ```bash
 npm run create-admin -- "<email>" "<password>" [master|hr|humas] [--prod]

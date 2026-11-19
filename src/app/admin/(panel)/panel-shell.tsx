@@ -10,6 +10,7 @@ import {
   Briefcase,
   Users,
   FileText,
+  KeyRound,
   LogOut,
   Home,
   Menu,
@@ -34,6 +35,7 @@ const nav: {
   { href: "/admin/tata-kelola", label: "Tata Kelola", icon: Users, section: "tata-kelola" },
   { href: "/admin/lowongan", label: "Lowongan Kerja", icon: Briefcase, section: "lowongan" },
   { href: "/admin/lamaran", label: "Lamaran (CV)", icon: FileText, section: "lamaran" },
+  { href: "/admin/akun", label: "Akun", icon: KeyRound, section: null },
 ];
 
 export default function PanelShell({

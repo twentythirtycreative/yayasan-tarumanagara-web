@@ -355,11 +355,13 @@ npm run migrate:job-types          # renames legacy job type values
 
 | Task | Procedure |
 | --- | --- |
+| Change your own password | In the panel, open **Akun** and fill in **Ganti Kata Sandi**. Your other sessions are signed out. |
+| Reset another account's password | Signed in as Admin Master, open **Akun** and use **Atur Ulang Kata Sandi Akun Lain**. All sessions of that account are signed out and its sign-in lockout is lifted. Give the new password to the account owner in person. |
+| Reset the Admin Master password | If no one can sign in as Admin Master, run `npm run create-admin -- "<email>" "<new password>" master --prod`. |
 | Create an account | `npm run create-admin -- "<email>" "<password>" <role> [--prod]` |
-| Reset a password | Run the same command for the existing email address with the new password. |
 | Change a role | Run the same command with the new role. A password must also be supplied, and it replaces the current one. |
-| Remove an account | Open `npm run db:studio` against the relevant database and delete the row from `admin_users`. |
-| Lift a sign-in lockout | Wait 15 minutes, or delete the row for that email address from `login_attempts` in Drizzle Studio. |
+| Remove an account | Open `npm run db:studio` against the relevant database and delete the row from `admin_users`. Its sessions end immediately. |
+| Lift a sign-in lockout | Wait 15 minutes, reset the account's password from **Akun**, or delete the row for that email address from `login_attempts` in Drizzle Studio. |
 
 Email addresses are stored in lower case. To open Drizzle Studio against production, set `DOTENV_FILE=.env.production.local` first, as in [C2](#c2-changing-the-database-schema).
 

@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
-import { verifyPassword } from "@/lib/auth/password";
-import { SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/lib/auth/session";
+import { passwordFingerprint, verifyPassword } from "@/lib/auth/password";
+import { SESSION_COOKIE } from "@/lib/auth/session";
+import { setSessionCookie } from "@/lib/auth/session-cookie";
 import { isAdminRole } from "@/lib/auth/roles";
 
 export type LoginState = { error?: string };
@@ -99,18 +100,11 @@ export async function login(
 
   await clearAttempts(email);
 
-  const token = await signSession({
+  await setSessionCookie({
     sub: user.id,
     email: user.email,
     role: user.role,
-  });
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
+    pv: passwordFingerprint(user.passwordHash),
   });
 
   redirect("/admin");
